@@ -1,0 +1,8 @@
+Pertanyaan,Baseline_Answer,Baseline_Faithfulness,MultiAgent_Answer,MultiAgent_Revisions,MultiAgent_Faithfulness
+Siapa nama presiden Mesir yang dibunuh pada 6 Oktober 1981?,"**Presiden Mesir yang Dibunuh pada 6 Oktober 1981: Muhammad Anwar el-Sadat**
+
+Presiden ketiga Mesir ...",0.0,"**Presiden Mesir yang Dibunuh pada 6 Oktober 1981: Muhammad Anwar el-Sadat**
+
+Presiden Mesir yang di...",1,0.0
+Siapa saja tokoh Ikatan Ahli Arkeologi Indonesia?,Berikut adalah artikel mengenai tokoh-tokoh Ikatan Ahli Arkeologi Indonesia (IAAI) berdasarkan konte...,0.0,Para ahli arkeologi di Indonesia terhimpun dalam sebuah organisasi profesi yang dikenal dengan nama ...,2,0.0
+Apa ibu kota dari negara Australia?,"Berdasarkan konteks yang diberikan, **tidak ada informasi** mengenai negara Australia maupun ibu kot...",0.0,"Berdasarkan konteks yang diberikan, tidak terdapat informasi mengenai ibu kota dari negara Australia...",1,1.0
