@@ -37,7 +37,22 @@ def writer_node(state: AgentState):
         HumanMessage(content=user_content)
     ]
     
-    response = model.invoke(messages)
+    import time
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            response = model.invoke(messages)
+            break
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                if attempt < max_attempts - 1:
+                    print(f"Limit API tercapai. Menunggu 30 detik sebelum mencoba lagi... (Percobaan {attempt+1}/{max_attempts})")
+                    time.sleep(30)
+                else:
+                    raise e
+            else:
+                raise e
+                
     content = response.content
     if isinstance(content, list):
         content = content[0].get("text", str(content)) if isinstance(content[0], dict) else str(content[0])
