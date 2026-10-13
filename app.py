@@ -17,6 +17,14 @@ from src.utils.metrics_logger import log_metrics
 # Load environment variables
 load_dotenv()
 
+# Sinkronisasi Secrets Streamlit Cloud ke os.environ
+try:
+    for k, v in st.secrets.items():
+        if isinstance(v, str):
+            os.environ[k] = v
+except Exception:
+    pass
+
 # Setup Halaman
 st.set_page_config(page_title="Travelista AI Editorial", page_icon="✍️", layout="centered")
 
@@ -121,23 +129,31 @@ if st.button("Mulai Menulis", type="primary"):
         end_time = time.time()
         total_latency = end_time - start_time
         
+        # Simpan ke session_state agar tidak hilang jika terjadi rerun
+        st.session_state["final_state"] = final_state
+        st.session_state["total_latency"] = total_latency
+
         # Ekstraksi dan Log Metrik
         try:
             log_metrics(final_state, total_latency)
         except Exception as e:
             st.warning(f"Gagal menyimpan metrik ke CSV: {e}")
+
+# Tampilan Hasil (Persisten)
+if "final_state" in st.session_state:
+    saved_state = st.session_state["final_state"]
+    saved_latency = st.session_state.get("total_latency", 0)
+
+    st.subheader("📄 Hasil Akhir Artikel (Siap Terbit)")
+    st.info(saved_state.get("draft", "Gagal menghasilkan draf."))
+    
+    with st.expander("📚 Lihat Sumber Data Asli (Konteks)"):
+        st.write(saved_state.get("context", "Konteks kosong."))
         
-        # Tampilan Hasil
-        st.subheader("📄 Hasil Akhir Artikel (Siap Terbit)")
-        st.info(final_state.get("draft", "Gagal menghasilkan draf."))
-        
-        with st.expander("📚 Lihat Sumber Data Asli (Konteks)"):
-            st.write(final_state.get("context", "Konteks kosong."))
-            
-        with st.expander("📊 Metrik Eksperimen (Fase 3 & 4)"):
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Waktu Total", f"{total_latency:.2f} dtk")
-            col2.metric("Token Writer", final_state.get("writer_tokens", 0))
-            col3.metric("Token Reviewer", final_state.get("reviewer_tokens", 0))
-            col4.metric("Token Grader", final_state.get("grader_tokens", 0))
-            st.caption("Data metrik ini telah disimpan secara otomatis ke dalam `experiment_metrics.csv`.")
+    with st.expander("📊 Metrik Eksperimen (Fase 3 & 4)"):
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Waktu Total", f"{saved_latency:.2f} dtk")
+        col2.metric("Token Writer", saved_state.get("writer_tokens", 0))
+        col3.metric("Token Reviewer", saved_state.get("reviewer_tokens", 0))
+        col4.metric("Token Grader", saved_state.get("grader_tokens", 0))
+        st.caption("Data metrik ini telah disimpan secara otomatis ke dalam `experiment_metrics.csv`.")

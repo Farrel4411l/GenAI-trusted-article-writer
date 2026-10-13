@@ -20,13 +20,27 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
 
 COLLECTION_NAME = "wiki_travelista"
 
+_embeddings_instance = None
+
+def get_embeddings():
+    global _embeddings_instance
+    if _embeddings_instance is None:
+        try:
+            import torch
+            torch.set_num_threads(1)
+        except Exception:
+            pass
+        _embeddings_instance = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+            model_kwargs={"device": "cpu"}
+        )
+    return _embeddings_instance
+
 def get_retriever(k: int = 15):
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL tidak disetel di .env")
         
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-    )
+    embeddings = get_embeddings()
     
     store = PGVector(
         collection_name=COLLECTION_NAME,
@@ -114,7 +128,7 @@ def search_context(query: str, model_id: str, k: int = 15) -> Tuple[str, int]:
                 store = PGVector(
                     collection_name=COLLECTION_NAME,
                     connection_string=DATABASE_URL,
-                    embedding_function=HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+                    embedding_function=get_embeddings()
                 )
                 store.add_documents(chunks)
                 
