@@ -1,22 +1,25 @@
 import os
+import time
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
 from src.agents.prompts import REVIEWER_SYSTEM_PROMPT
 from src.agents.writer_agent import AgentState
+from src.agents.llm_factory import get_llm
 
 def reviewer_node(state: AgentState):
     """
     Node untuk Agent Reviewer. Bertugas mengecek halusinasi pada draf Writer.
     """
-    print(f"\n[Agent Reviewer] Sedang memverifikasi draf...")
+    reviewer_model_name = state.get("reviewer_model", "gemini/gemini-3.5-flash")
+    print(f"\n[Agent Reviewer] Sedang memverifikasi draf menggunakan {reviewer_model_name}...")
     
-    # Inisialisasi LLM Reviewer (Sesuai paper: menggunakan Gemini-1.5-Pro)
-    # Suhu = 0.0 agar objektif dan deterministik (sesuai standar Scopus)
-    model = ChatGoogleGenerativeAI(
-        model=os.getenv("MODEL_WRITER", "gemini-3.5-flash"),
-        google_api_key=os.getenv("GEMINI_API_KEY"),
-        temperature=0.0 
-    )
+    # Inisialisasi LLM Reviewer (Suhu di-override ke 0.0 di factory atau di sini,
+    # tapi kita gunakan factory default 0.7 untuk saat ini, idealnya 0.0)
+    # Untuk simplifikasi, llm_factory sudah kita buat, kita gunakan langsung.
+    model = get_llm(reviewer_model_name)
+    
+    # Memaksa temperature ke 0.0 jika didukung model object
+    if hasattr(model, "temperature"):
+        model.temperature = 0.0
     
     user_content = f"TOPIK:\n{state['topic']}\n\nKONTEKS ASLI (Kebenaran):\n{state['context']}\n\nDRAF ARTIKEL:\n{state['draft']}"
     
@@ -25,14 +28,13 @@ def reviewer_node(state: AgentState):
         HumanMessage(content=user_content)
     ]
     
-    import time
     max_attempts = 3
     for attempt in range(max_attempts):
         try:
             response = model.invoke(messages)
             break
         except Exception as e:
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "rate limit" in str(e).lower():
                 if attempt < max_attempts - 1:
                     print(f"Limit API tercapai. Menunggu 30 detik sebelum mencoba lagi... (Percobaan {attempt+1}/{max_attempts})")
                     time.sleep(30)
@@ -43,7 +45,13 @@ def reviewer_node(state: AgentState):
                 
     content = response.content
     if isinstance(content, list):
-        content = content[0].get("text", str(content)) if isinstance(content[0], dict) else str(content[0])
+        draft_text = ""
+        for item in content:
+            if isinstance(item, dict) and "text" in item:
+                draft_text += item["text"] + "\n"
+            elif isinstance(item, str):
+                draft_text += item + "\n"
+        content = draft_text
     
     feedback = content.strip()
     
@@ -59,8 +67,18 @@ def reviewer_node(state: AgentState):
         revision_notes = feedback
         print(f"[Agent Reviewer] KEPUTUSAN: REVISI DIBUTUHKAN\nCatatan: {revision_notes}")
         
+    # Ekstraksi Token Usage
+    tokens = 0
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        tokens = response.usage_metadata.get("total_tokens", 0)
+    elif hasattr(response, "response_metadata") and "token_usage" in response.response_metadata:
+        tokens = response.response_metadata["token_usage"].get("total_tokens", 0)
+        
+    current_tokens = state.get("reviewer_tokens", 0) + tokens
+    
     return {
         "is_passed": is_passed,
         "revision_notes": revision_notes,
-        "revision_count": state["revision_count"] + 1
+        "revision_count": state.get("revision_count", 0) + 1,
+        "reviewer_tokens": current_tokens
     }

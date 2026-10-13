@@ -1,5 +1,9 @@
 import os
 import sys
+
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from dotenv import load_dotenv
@@ -16,17 +20,18 @@ def retrieve_node(state: AgentState):
     """
     print(f"\n[Retriever] Mencari konteks untuk topik: '{state['topic']}'")
     
-    # Ambil 3 chunk konteks terbaik
-    contexts = search_context(state['topic'], k=3)
-    
-    # Gabungkan menjadi satu teks panjang
-    context_text = "\n\n".join(contexts)
+    # Ambil konteks berformat metadata dari 15 dokumen terbaik
+    model_id = state.get("writer_model", "groq/qwen/qwen3.8-27b")
+    context_text, grader_tokens = search_context(state['topic'], model_id, k=15)
     
     if not context_text.strip():
         print("[Retriever] PERINGATAN: Konteks tidak ditemukan di database!")
         context_text = "Tidak ada informasi terkait di database."
         
-    return {"context": context_text}
+    return {
+        "context": context_text,
+        "grader_tokens": state.get("grader_tokens", 0) + grader_tokens
+    }
 
 def should_continue(state: AgentState):
     """

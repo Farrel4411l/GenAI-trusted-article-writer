@@ -1,9 +1,14 @@
 langchain
 langchain-openai
 langchain-google-genai
-llama-index
-ragas
-datasets
+langchain-community
+langchain-groq
+langchain-cohere
+langchain-huggingface
+langchain-text-splitters
+langgraph
+streamlit
+sentence-transformers
 pgvector
 psycopg2-binary
 python-dotenv
@@ -11,6 +16,7 @@ pandas
 scikit-learn
 matplotlib
 seaborn
-langchain-community
 tiktoken
-langchain-text-splitters
+wikipedia
+ragas
+datasets
