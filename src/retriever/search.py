@@ -15,6 +15,9 @@ wikipedia.set_user_agent("TravelistaBot/1.0 (travelista@example.com)")
 wikipedia.set_lang("id")
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 COLLECTION_NAME = "wiki_travelista"
 
 def get_retriever(k: int = 15):
