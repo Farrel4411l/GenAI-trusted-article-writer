@@ -1,9 +1,51 @@
 import os
+import re
 import time
 from typing import TypedDict, List
 from langchain_core.messages import HumanMessage, SystemMessage
 from src.agents.prompts import WRITER_SYSTEM_PROMPT
 from src.agents.llm_factory import get_llm
+
+def deduplicate_references(draft_text: str) -> str:
+    """
+    Membersihkan dan mendeduplikasi daftar 'Sumber Referensi' di bagian akhir artikel
+    agar URL yang sama tidak diulang berkali-kali.
+    """
+    pattern = re.compile(r'(?i)(\*{0,2}sumber referensi:?\*{0,2})')
+    match = pattern.search(draft_text)
+    if not match:
+        return draft_text
+
+    split_idx = match.start()
+    body = draft_text[:split_idx].rstrip()
+    header = match.group(1)
+    ref_block = draft_text[match.end():].strip()
+
+    seen_urls = set()
+    unique_lines = []
+
+    for line in ref_block.splitlines():
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        # Hapus nomor urut atau bullet di awal baris
+        item_text = re.sub(r'^(?:\d+[\.\)]\s*|[-*•]\s*)', '', line_clean).strip()
+        if not item_text:
+            continue
+
+        # Cari URL di dalam format markdown [Judul](URL) atau URL langsung
+        url_match = re.search(r'\((https?://[^\s\)]+)\)|https?://[^\s\)]+', item_text)
+        key = url_match.group(1) if (url_match and url_match.group(1)) else (url_match.group(0) if url_match else item_text.lower())
+
+        if key not in seen_urls:
+            seen_urls.add(key)
+            unique_lines.append(item_text)
+
+    if not unique_lines:
+        return draft_text
+
+    formatted_refs = "\n".join(f"{i}. {item}" for i, item in enumerate(unique_lines, start=1))
+    return f"{body}\n\n{header}\n{formatted_refs}"
 
 # Definisi State/Memory yang dibawa-bawa dalam Graph (Siklus)
 class AgentState(TypedDict):
@@ -68,8 +110,16 @@ def writer_node(state: AgentState):
                 
     content = response.content
     if isinstance(content, list):
-        content = content[0].get("text", str(content)) if isinstance(content[0], dict) else str(content[0])
-        
+        draft_text = ""
+        for item in content:
+            if isinstance(item, dict) and "text" in item:
+                draft_text += item["text"]
+            elif isinstance(item, str):
+                draft_text += item
+        content = draft_text
+
+    content = deduplicate_references(content)
+
     # Update State dengan draft terbaru dan metrik
     return {
         "draft": content,
