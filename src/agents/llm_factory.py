@@ -23,10 +23,13 @@ def get_llm(model_identifier: str):
     provider = provider.lower()
     
     if provider == "groq":
+        # Khusus Qwen 27B di Groq free tier memiliki limit ketat 1000 Output Tokens Per Minute (OTPM).
+        # Memasang max_tokens 800 mencegah request melampaui kuota 1000 OTPM.
+        groq_max_tokens = 800 if "qwen" in model_name.lower() else 1000
         return ChatGroq(
             temperature=0.7,
             model_name=model_name,
-            max_tokens=2500,
+            max_tokens=groq_max_tokens,
             api_key=os.getenv("GROQ_API_KEY")
         )
     elif provider == "cohere":

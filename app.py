@@ -187,6 +187,12 @@ with st.container(border=True):
             f"Jika terjadi 1x revisi (2 iterasi), estimasi menjadi **~{prediction_2x['pred_total_all']:,} token** "
             f"(**{prediction_2x['total_pct_of_total']:.2f}%** dari total kuota)."
         )
+    if "qwen" in writer_model_id.lower():
+        st.warning(
+            "⏱️ **Catatan Rate Limit Model**: Qwen 3.8 27B di Groq memiliki batas kecepatan *1.000 output token/menit*. "
+            "Jika Reviewer meminta revisi (iterasi ke-2), sistem akan otomatis melakukan jeda (~60 dtk) agar kuota menit pulih tanpa error. "
+            "*(Untuk proses revisi instan tanpa jeda menit, Anda dapat memilih **Gemini 3.5 Flash** atau **GPT-OSS 120B**)*."
+        )
 
 if st.button("Mulai Menulis", type="primary"):
     if not topic.strip():

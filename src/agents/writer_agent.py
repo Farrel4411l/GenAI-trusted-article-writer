@@ -90,10 +90,14 @@ def writer_node(state: AgentState):
             response = model.invoke(messages)
             break
         except Exception as e:
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "rate limit" in str(e).lower():
+            err_str = str(e).lower()
+            if "429" in str(e) or "resource_exhausted" in err_str or "rate limit" in err_str or "otpm" in err_str:
                 if attempt < max_attempts - 1:
-                    print(f"Limit API (429/OTPM) tercapai. Menunggu 45 detik agar kuota token pulih... (Percobaan {attempt+1}/{max_attempts})")
-                    time.sleep(45)
+                    # Turunkan max_tokens jika model mendukung untuk meringankan beban OTPM
+                    if hasattr(model, "max_tokens") and model.max_tokens:
+                        model.max_tokens = max(600, model.max_tokens - 100)
+                    print(f"Batas kecepatan API (429/OTPM) tercapai. Menunggu 60 detik agar sliding window 1 menit pulih... (Percobaan {attempt+1}/{max_attempts})")
+                    time.sleep(60)
                 else:
                     raise e
             else:
