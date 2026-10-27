@@ -1,5 +1,6 @@
-Timestamp,Topic,Writer Model,Reviewer Model,Revisions,Passed,Writer Tokens,Reviewer Tokens,Total Latency (s)
-2026-10-08 07:53:02,gado-gado,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,1,True,711,1525,24.52
+Timestamp,Topic,Writer Model,Reviewer Model,Revisions,Passed,Writer Tokens,Reviewer Tokens,Grader Tokens,Total Latency (s)
+2026-10-08 07:53:02,gado-gado,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,1,True,711,1525,0,24.52
 2026-10-08 08:01:51,balado,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,1,True,424,790,259,24.85
 2026-10-08 08:11:22,kuala lumpur,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,1,True,4160,8480,285,62.44
 2026-10-12 13:58:40,gado-gado,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,3,False,7216,10431,256,115.88
+2026-10-14 12:01:47,aceh,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,1,True,4587,5785,436,38.76
