@@ -4,3 +4,5 @@ Timestamp,Topic,Writer Model,Reviewer Model,Revisions,Passed,Writer Tokens,Revie
 2026-10-08 08:11:22,kuala lumpur,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,1,True,4160,8480,285,62.44
 2026-10-12 13:58:40,gado-gado,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,3,False,7216,10431,256,115.88
 2026-10-14 12:01:47,aceh,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,1,True,4587,5785,436,38.76
+2026-10-28 09:49:24,Dataran Tinggi Dieng dan Candi Dieng,groq/openai/gpt-oss-120b,gemini/gemini-3.5-flash,1,True,889,834,718,85.75
+2026-10-28 09:52:43,Situs Batujaya dan Kabupaten Karawang,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,1,True,7094,5253,1207,94.48

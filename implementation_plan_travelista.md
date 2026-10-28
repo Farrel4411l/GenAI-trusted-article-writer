@@ -48,3 +48,15 @@ Jika Anda setuju dengan rencana ini, saya akan mengeksekusi dengan urutan beriku
 *   **Fase 2 (Database):** Memperbarui `ingestion.py` agar menangkap *URL Metadata* dan menanamkannya ke PostgreSQL.
 *   **Fase 3 (Orkestrasi):** Merombak `writer_agent.py` dan `prompts.py` untuk mengaktifkan sistem Sitasi (Sumber) dan aturan 5-8 paragraf.
 *   **Fase 4 (UI):** Meng-update Streamlit `app.py` agar menampilkan kotak khusus untuk daftar referensi dan membuat desain artikel terlihat seperti majalah digital travel (seperti Travelista).
+
+
+---
+
+## 6. Pembaruan Ekspansi: Sistem Otomasi Harian (*Autonomous Daily Editorial Pipeline*)
+*(Lihat detail teknis lengkap pada [`implementationplan.md`](./implementationplan.md))*
+
+Tanpa menyentuh atau mengubah logika inti Multi-Agent RAG yang sudah berjalan stabil, sistem diperluas dengan arsitektur otomasi harian end-to-end:
+1. **Trend Analyzer (`src/automation/trend_hunter.py`)**: Mengecek tren pencarian terkini di Indonesia (Google Trends RSS & Google News ID) pada 4 genre resmi Travelista (*Wisata & Destinasi*, *Kuliner Nusantara*, *Sejarah & Misteri Lokal*, *Budaya & Fakta Unik*), lalu menentukan Genre, Topik Riset, Target Judul, dan Sudut Pandang secara mandiri.
+2. **Smart Model Router (`src/automation/model_router.py`)**: Memilih pasangan model AI terbaik untuk *Writer* dan *Reviewer* berdasarkan kecocokan genre serta sisa kuota token harian (`token_tracker.py`).
+3. **Dual-Stage Verification (`src/automation/final_checker_agent.py`)**: Setelah lulus *Fact-Checker* kredibilitas sumber (`reviewer_agent.py`), artikel diperiksa oleh **Checker Akhir** untuk memastikan kesesuaian Judul, Topik, Genre, dan kelengkapan struktur/metadata JSON agar siap di-*copy-paste* redaksi maupun *auto-deploy* ke CMS.
+4. **Automated Cron Job 10:00 WIB & Supabase Storage (`.github/workflows/daily_editorial.yml` & `src/automation/storage_supabase.py`)**: Berjalan otomatis setiap pukul 10:00 WIB dan menyimpan hasilnya ke tabel `daily_auto_articles` di Supabase PostgreSQL.

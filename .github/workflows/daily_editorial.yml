@@ -1,0 +1,46 @@
+name: Travelista Daily Automated Editorial (10:00 WIB)
+
+on:
+  schedule:
+    # 03:00 UTC = 10:00 WIB (Setiap Hari)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      preferred_genre:
+        description: 'Opsional: Pilih Genre spesifik (kosongkan untuk otomatis mengikuti tren)'
+        required: false
+        default: ''
+
+jobs:
+  generate-daily-article:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Autonomous Daily Editorial Pipeline (10:00 WIB)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "${{ github.event.inputs.preferred_genre }}" ]; then
+            python run_daily_job.py --genre "${{ github.event.inputs.preferred_genre }}"
+          else
+            python run_daily_job.py
+          fi

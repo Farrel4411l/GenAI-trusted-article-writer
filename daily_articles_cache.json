@@ -1,0 +1,175 @@
+[
+  {
+    "run_date": "2026-10-28 09:51 WIB",
+    "genre": "Sejarah & Misteri Lokal",
+    "trending_keyword": "Situs Batujaya di Karawang",
+    "trend_source": "Google News ID",
+    "topic": "Situs Batujaya dan Kabupaten Karawang",
+    "target_title": "Menyingkap Misteri Situs Batujaya Karawang: Jejak Peradaban Candi Jiwa di Tanah Pasundan",
+    "final_title": "Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan",
+    "slug": "misteri-situs-batujaya-karawang-jejak-candi-jiwa-dan-peradaban-tarumanagara-di-tanah-pasun",
+    "editorial_angle": "Mengulas pesona dan nilai sejarah Kompleks Candi Batujaya di Karawang yang menjadi jejak tertua peninggalan peradaban Tarumanagara. Artikel ini menyoroti keunikan struktur arsitektur bata merah Candi Jiwa serta potensi pengembangannya sebagai destinasi cagar budaya unggulan di Jawa Barat.",
+    "writer_model": "gemini/gemini-3.5-flash",
+    "reviewer_model": "groq/openai/gpt-oss-120b",
+    "routing_reason": "Genre Sejarah & Misteri Lokal padat akan angka tahun, nama tokoh, dan kronologi sehingga menggunakan Gemini 3.5 Flash (konteks luas untuk sintesis multi-dokumen & Grader) serta GPT-OSS 120B (Groq) sebagai Fact-Checker berpenalaran tinggi. Writer dipilih **Gemini 3.5 Flash** (sisa kuota: 249,166 token) dan Reviewer dipilih **GPT-OSS 120B (Groq)** (sisa kuota: 93,370 token) untuk menjaga objektivitas *cross-model evaluation*.",
+    "article_markdown": "# Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan\n\nSelama ini Kabupaten Karawang mungkin lebih dikenal sebagai kawasan industri modern atau tempat bersejarah peristiwa Rengasdengklok. Namun, di balik hamparan hijau persawahan Desa Segaran dan Desa Talagajaya, tersimpan sebuah rahasia besar dari masa lampau: Kompleks Percandian Batujaya. Terletak hanya sekitar enam kilometer dari pesisir utara Jawa Barat dan 500 meter di utara Sungai Citarum, kawasan seluas lima kilometer persegi ini memuat jejak peradaban tertua di Nusantara yang dibangun pada era Kerajaan Tarumanagara. Kehadiran kompleks percandian Buddha yang megah di tengah kerajaan bercorak Hindu ini menjadi bukti nyata betapa tingginya nilai toleransi beragama di Tanah Pasundan sejak ribuan tahun lalu.\n\nSitus Batujaya menyimpan pesona misteri melalui dua lapisan budaya yang terekam dengan jelas, yakni masa prasejarah dan masa Hindu-Buddha dari abad permulaan masehi hingga abad ke-7. Di area ini, para arkeolog menemukan rangka manusia beserta bekal kubur prasejarah era abad ke-1 hingga ke-3 Masehi, seperti wadah tembikar lokal dan India Selatan, manik-manik, hingga peninggalan megalitik berupa menhir. Temuan tersebut menunjukkan bahwa sebelum struktur candi dibangun, kawasan yang dahulunya dikelilingi rawa dan danau purba ini telah lama difungsikan masyarakat setempat sebagai ruang suci dan tempat hunian.\n\nSatu hal yang paling memikat dari percandian Batujaya adalah keunikan arsitekturnya. Tidak seperti candi-candi di Jawa Tengah yang didominasi batu andesit, bangunan candi di Batujaya dibangun menggunakan material batu bata merah dengan perkuatan lapisan beton kuno (*stucco concrete*) dan dilapisi lepa (*stucco plaster*). Sebelum diteliti pertama kali oleh tim arkeologi Universitas Indonesia pada tahun 1984, sisa-sisa bangunan kuno ini tersembunyi di bawah gundukan tanah yang oleh masyarakat lokal dinamai *unur*. Hingga kini, teridentifikasi puluhan *unur* yang terbagi dalam Kelompok Situs Segaran dan Kelompok Situs Telagajaya, mempertegas betapa luasnya kompleks sejarah yang kini berada di bawah naungan Museum dan Cagar Budaya Kementerian Kebudayaan Republik Indonesia ini.\n\nDi antara puluhan sisa bangunan yang ditemukan, Candi Jiwa (Batujaya I) dan Candi Blandongan (Batujaya V) menjadi mahakarya yang paling menyedot perhatian. Candi Jiwa memiliki bagian atas menyerupai bunga padma (teratai) yang mekar tanpa tangga masuk, menciptakan ilusi seperti arca Buddha yang mengapung di atas air. Di candi ini, umat Buddha melakukan ritual persembahyangan *pradaksina* dengan mengelilingi bangunan searah jarum jam. Sementara itu, Candi Blandongan yang berjarak sekitar 100 meter memiliki empat tangga dan diduga kuat berfungsi sebagai candi pendharmaan Raja Purnawarman. Di lokasi Candi Blandongan inilah ditemukan benda berharga berupa lempengan emas 16 karat berinskripsi Pallawa dan bahasa Sanskerta, serta berbagai *amulet* berukir figur Buddha, Dewa Brahma Sahampati, dan Dewa Sakra.\n\nBagi Anda pencinta wisata sejarah dan misteri lokal yang ingin menjelajahi peninggalan megah ini, perjalanannya bisa ditempuh menggunakan kendaraan pribadi dari Jakarta melalui Tol Cikampek, keluar di Gerbang Tol Karawang Barat, lalu melaju ke arah Rengasdengklok hingga tiba di Kecamatan Batujaya. Meskipun jaraknya secara garis lurus hanya sekitar 50 km dari Jakarta, kondisi jalan membuat waktu tempuh berkisar hingga tiga jam, namun rasa lelah akan langsung terbayar saat menyaksikan langsung hamparan candi bata merah tertua di Indonesia ini. Menjelajahi Situs Batujaya tidak hanya memberi pengalaman spiritual dan edukasi peradaban kuno, tetapi juga mengingatkan kita akan pentingnya menjaga dan mempromosikan potensi cagar budaya unggulan ini agar tetap lestari sepanjang zaman.\n\n***\n\n**Sumber Referensi:**\n1. [Percandian Batujaya](https://id.wikipedia.org/wiki/Percandian_Batujaya)",
+    "meta_description": "Temukan misteri dan nilai sejarah Kompleks Candi Batujaya di Karawang, jejak peradaban Tarumanagara dengan arsitektur bata merah unik, kini destinasi cagar budaya unggulan.",
+    "tags": [
+      "Batujaya",
+      "Karawang",
+      "Candi Jiwa",
+      "Sejarah Indonesia",
+      "Wisata Budaya"
+    ],
+    "references": [
+      {
+        "title": "Percandian Batujaya",
+        "url": "https://id.wikipedia.org/wiki/Percandian_Batujaya"
+      }
+    ],
+    "fact_check_passed": true,
+    "fact_check_revisions": 1,
+    "final_check_passed": true,
+    "final_check_score": 95,
+    "final_check_notes": "[Judul: ✅ Sesuai] [Topik: ✅ Sesuai] [Genre: ✅ Sesuai] [Format: ✅ Siap Deploy (5 Paragraf, 1 Sumber)] — Judul, topik, genre, dan format artikel selaras dengan permintaan; artikel mengulas sejarah, arsitektur, dan potensi wisata Batujaya secara lengkap.",
+    "cms_payload": {
+      "schema_version": "1.0-travelista-cms",
+      "status": "ready_to_publish",
+      "generated_at": "2026-10-28T09:52:43.075819+07:00",
+      "article": {
+        "title": "Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan",
+        "slug": "misteri-situs-batujaya-karawang-jejak-candi-jiwa-dan-peradaban-tarumanagara-di-tanah-pasun",
+        "genre": "Sejarah & Misteri Lokal",
+        "topic": "Situs Batujaya dan Kabupaten Karawang",
+        "meta_description": "Temukan misteri dan nilai sejarah Kompleks Candi Batujaya di Karawang, jejak peradaban Tarumanagara dengan arsitektur bata merah unik, kini destinasi cagar budaya unggulan.",
+        "tags": [
+          "Batujaya",
+          "Karawang",
+          "Candi Jiwa",
+          "Sejarah Indonesia",
+          "Wisata Budaya"
+        ],
+        "paragraph_count": 5,
+        "content_markdown": "# Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan\n\nSelama ini Kabupaten Karawang mungkin lebih dikenal sebagai kawasan industri modern atau tempat bersejarah peristiwa Rengasdengklok. Namun, di balik hamparan hijau persawahan Desa Segaran dan Desa Talagajaya, tersimpan sebuah rahasia besar dari masa lampau: Kompleks Percandian Batujaya. Terletak hanya sekitar enam kilometer dari pesisir utara Jawa Barat dan 500 meter di utara Sungai Citarum, kawasan seluas lima kilometer persegi ini memuat jejak peradaban tertua di Nusantara yang dibangun pada era Kerajaan Tarumanagara. Kehadiran kompleks percandian Buddha yang megah di tengah kerajaan bercorak Hindu ini menjadi bukti nyata betapa tingginya nilai toleransi beragama di Tanah Pasundan sejak ribuan tahun lalu.\n\nSitus Batujaya menyimpan pesona misteri melalui dua lapisan budaya yang terekam dengan jelas, yakni masa prasejarah dan masa Hindu-Buddha dari abad permulaan masehi hingga abad ke-7. Di area ini, para arkeolog menemukan rangka manusia beserta bekal kubur prasejarah era abad ke-1 hingga ke-3 Masehi, seperti wadah tembikar lokal dan India Selatan, manik-manik, hingga peninggalan megalitik berupa menhir. Temuan tersebut menunjukkan bahwa sebelum struktur candi dibangun, kawasan yang dahulunya dikelilingi rawa dan danau purba ini telah lama difungsikan masyarakat setempat sebagai ruang suci dan tempat hunian.\n\nSatu hal yang paling memikat dari percandian Batujaya adalah keunikan arsitekturnya. Tidak seperti candi-candi di Jawa Tengah yang didominasi batu andesit, bangunan candi di Batujaya dibangun menggunakan material batu bata merah dengan perkuatan lapisan beton kuno (*stucco concrete*) dan dilapisi lepa (*stucco plaster*). Sebelum diteliti pertama kali oleh tim arkeologi Universitas Indonesia pada tahun 1984, sisa-sisa bangunan kuno ini tersembunyi di bawah gundukan tanah yang oleh masyarakat lokal dinamai *unur*. Hingga kini, teridentifikasi puluhan *unur* yang terbagi dalam Kelompok Situs Segaran dan Kelompok Situs Telagajaya, mempertegas betapa luasnya kompleks sejarah yang kini berada di bawah naungan Museum dan Cagar Budaya Kementerian Kebudayaan Republik Indonesia ini.\n\nDi antara puluhan sisa bangunan yang ditemukan, Candi Jiwa (Batujaya I) dan Candi Blandongan (Batujaya V) menjadi mahakarya yang paling menyedot perhatian. Candi Jiwa memiliki bagian atas menyerupai bunga padma (teratai) yang mekar tanpa tangga masuk, menciptakan ilusi seperti arca Buddha yang mengapung di atas air. Di candi ini, umat Buddha melakukan ritual persembahyangan *pradaksina* dengan mengelilingi bangunan searah jarum jam. Sementara itu, Candi Blandongan yang berjarak sekitar 100 meter memiliki empat tangga dan diduga kuat berfungsi sebagai candi pendharmaan Raja Purnawarman. Di lokasi Candi Blandongan inilah ditemukan benda berharga berupa lempengan emas 16 karat berinskripsi Pallawa dan bahasa Sanskerta, serta berbagai *amulet* berukir figur Buddha, Dewa Brahma Sahampati, dan Dewa Sakra.\n\nBagi Anda pencinta wisata sejarah dan misteri lokal yang ingin menjelajahi peninggalan megah ini, perjalanannya bisa ditempuh menggunakan kendaraan pribadi dari Jakarta melalui Tol Cikampek, keluar di Gerbang Tol Karawang Barat, lalu melaju ke arah Rengasdengklok hingga tiba di Kecamatan Batujaya. Meskipun jaraknya secara garis lurus hanya sekitar 50 km dari Jakarta, kondisi jalan membuat waktu tempuh berkisar hingga tiga jam, namun rasa lelah akan langsung terbayar saat menyaksikan langsung hamparan candi bata merah tertua di Indonesia ini. Menjelajahi Situs Batujaya tidak hanya memberi pengalaman spiritual dan edukasi peradaban kuno, tetapi juga mengingatkan kita akan pentingnya menjaga dan mempromosikan potensi cagar budaya unggulan ini agar tetap lestari sepanjang zaman.\n\n***\n\n**Sumber Referensi:**\n1. [Percandian Batujaya](https://id.wikipedia.org/wiki/Percandian_Batujaya)",
+        "references": [
+          {
+            "title": "Percandian Batujaya",
+            "url": "https://id.wikipedia.org/wiki/Percandian_Batujaya"
+          }
+        ]
+      },
+      "verification": {
+        "stage1_fact_checker": true,
+        "stage2_final_gatekeeper": true,
+        "compliance_score": 95,
+        "audit_summary": "[Judul: ✅ Sesuai] [Topik: ✅ Sesuai] [Genre: ✅ Sesuai] [Format: ✅ Siap Deploy (5 Paragraf, 1 Sumber)] — Judul, topik, genre, dan format artikel selaras dengan permintaan; artikel mengulas sejarah, arsitektur, dan potensi wisata Batujaya secara lengkap."
+      },
+      "trend_and_uniqueness_proof": {
+        "trending_keyword": "Situs Batujaya di Karawang",
+        "trend_source": "Google News ID",
+        "raw_signals_count": 24,
+        "live_signals_evidence": [
+          {
+            "title": "siasn bkn",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 19:40:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "lakers vs trail blazers",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 19:20:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "netanyahu",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 19:10:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "asn digital",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 18:30:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "motogp qatar",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 18:30:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "demo hari ini jakarta",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 18:10:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "boyaca chico",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 18:10:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "hasil pemilu israel",
+            "source": "Google Trends Indonesia (Real-Time RSS)",
+            "pub_date": "Tue, 27 Oct 2026 17:40:00 -0700",
+            "link": "https://trends.google.com/trending/rss?geo=ID",
+            "genre_hint": "General Trending ID"
+          },
+          {
+            "title": "16 Tempat Wisata Populer di Sulsel, Pantai Eksotis hingga Negeri di Atas Awan",
+            "source": "Google News ID (Wisata & Destinasi (Travel) — detikcom)",
+            "pub_date": "Sat, 25 Jul 2026 07:00:00 GMT",
+            "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNazVPNFNGWWZyS1o1bE5xbHpYaVVNcEtxb0p5cGpoYzM5OEkwdklubndQclNlVHJTZk0wOHFQWDJkaXhjeG9LQzBoWFdtemlhTTI0VFZ1WnJoZTBNWmhXVkw4OURCbGpiZEhwTU04b0lwV3BWUVJTemczTFlYbmdLMlduNHgtb1hReWFVVm1BeVMtVndKc0d6UHBYVEdWYlE2NDZDTnBkTWd2Q3M3TVExYzQzYkdIWHJ6VllFYmVNSdIBxAFBVV95cUxOdkh1TVhzc0tFSGVmREFCY3d6bUdua0JIVzhNMUdMR0M1TEZrcUxnblloOF9yVHJPNmxHaWhEemphRTBYY25mam42blhjOUkxUVo1ZGJ5SllBbzRKUkp2WHZMM1NhbUgxVE92MklGd0hxaml3SXAxYjU5d1R1aElqb19XTERWMHF2dk9oZzdvRWhGelB2Zy01Sk9SUzQwLVhpOGlMU01IdzFfZE5DQ2tmNDBhS0UteGpuMVBpNmlWUmE0Y1ZJ?oc=5",
+            "genre_hint": "Wisata & Destinasi (Travel)"
+          },
+          {
+            "title": "30 Spot Wisata Seru Sekitar Jakarta untuk Isi Waktu Libur Panjang Januari 2025",
+            "source": "Google News ID (Wisata & Destinasi (Travel) — Kementerian Pariwisata)",
+            "pub_date": "Sat, 25 Jan 2025 08:00:00 GMT",
+            "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQdG9aS203NW1tWnRpMWJ5clFkZUMzbjI4SElpM3kyeE8wRkFIQ21hekxqX0hBYkxkUHVYUnhpOGtSTjZMMWdsRXZMcnlpRHRBX0NseTBQamFuMWlFS2hicHNOSXZYdGRRT2NPZ1gwSDVIWC1fQ18wVTF3V0hMUHhxbThFaFNCWkVtMnFkN3FyZ0oyVmtnU0pCU3NqaUNwY0hscTdCVS1nTHJiQWFQ?oc=5",
+            "genre_hint": "Wisata & Destinasi (Travel)"
+          },
+          {
+            "title": "6 wisata alam terpopuler di Indonesia untuk liburan yang menenangkan",
+            "source": "Google News ID (Wisata & Destinasi (Travel) — ANTARA News)",
+            "pub_date": "Tue, 11 Nov 2025 08:00:00 GMT",
+            "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQS3F1MTV1REgwckdGT01NblRORVY0QzNwUzd1ZkFlNUUtNktSRm1OdURLaEJhd1BhanNiRjI4UUhyRFg3bnJpS3pRNGoxM0pKaW9MQ3B2c2FvS0FsTS03b3htN3lVM2hvbjNOT2V4cVFtUWdBdnNpNU5lLTdhUEstTmRnWmlTTFdNN2k2NXd4TTE4Q0FfdllPMXB6WDU5UnRLcW0zR3BoZkVmZHVKRXhB0gGyAUFVX3lxTE1WSFcyc3FhVjZLLUtpdGJZX1JqQWNkOFpHTGlGVXNmU09yUzNMWXNfcWlVd3pzWmNlSE4wM2g4bkVFN0wya3Y4VDVuZkR5U2tuclNQSHVGU2pOR0RpQms3b0JMYzB4VEp0SmttR0h1V3AxaWwxN215UDVUZWZBS25yUHFRUjQ2R29jRFBjeUNVSGZLYXNXclcycHZ5bmtYSksyRmVtX2ZiTXNpV1Q3YnA2M1E?oc=5",
+            "genre_hint": "Wisata & Destinasi (Travel)"
+          },
+          {
+            "title": "Tantangan dan Peluang Pariwisata Bali Menuju 2045",
+            "source": "Google News ID (Wisata & Destinasi (Travel) — Kementerian Sekretariat Negara)",
+            "pub_date": "Mon, 09 Sep 2024 07:00:00 GMT",
+            "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQOG52MEF5aHBVYUFJY2xsNURKdEdKNi1YQ3hndTBCYlhSNUlnQ0trd0N4SUZ5UFlsQlZXaWV1Nnlkc1lmYWszNUJGRU1NWFIzbHZReWMzc21iVFEtc0pWMFVad1Q2M2hnMExoUnNuNEJ2R1hDQms4SC1STk9NQ3NNNHlZM2JWakhadkN4Y3ZR?oc=5",
+            "genre_hint": "Wisata & Destinasi (Travel)"
+          }
+        ],
+        "checked_history_list": [
+          "gado-gado",
+          "balado",
+          "kuala lumpur",
+          "aceh",
+          "Dataran Tinggi Dieng dan Candi Dieng"
+        ],
+        "is_unique_non_identical_title": true
+      }
+    },
+    "writer_tokens": 7094,
+    "reviewer_tokens": 5253,
+    "grader_tokens": 1207,
+    "final_checker_tokens": 2257,
+    "total_latency": 94.48,
+    "id": 2,
+    "created_at": "2026-10-28 09:52:45 WIB"
+  }
+]
