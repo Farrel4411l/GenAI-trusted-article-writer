@@ -190,13 +190,13 @@ with tab_manual:
             value=f"~{prediction['pred_total_all']:,} token",
             delta=f"-{prediction['total_pct_of_total']:.2f}% dari total ({prediction['total_pct_of_remaining']:.2f}% sisa)",
             delta_color="inverse",
-            help=f"Total gabungan dari kapasitas kuota {prediction['combined_total_quota']:,} token"
+            help=f"Rincian: Writer (~{prediction['pred_writer']:,}) + Grader (~{prediction['pred_grader']:,}) + Reviewer (~{prediction['pred_reviewer']:,}) + Vision Reviewer (~{prediction.get('pred_vision', 650):,}) token"
         )
 
         if pred_iter == 1:
             st.caption(
                 f"💡 **Info Prediksi**: Dalam 1 iterasi, proses ini diprediksi menghabiskan **~{prediction['pred_total_all']:,} token** "
-                f"(**{prediction['total_pct_of_total']:.2f}%** dari total kuota). "
+                f"(**{prediction['total_pct_of_total']:.2f}%** dari total kuota, termasuk ~{prediction.get('pred_vision', 650)} token visual untuk Agent Vision Reviewer). "
                 f"Jika terjadi 1x revisi (2 iterasi), estimasi menjadi **~{prediction_2x['pred_total_all']:,} token** "
                 f"(**{prediction_2x['total_pct_of_total']:.2f}%** dari total kuota)."
             )

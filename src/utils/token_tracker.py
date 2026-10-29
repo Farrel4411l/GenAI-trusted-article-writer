@@ -186,10 +186,12 @@ def predict_token_usage(
     pred_writer_1x = int(w_stat["avg_writer_per_iter"] * entity_multiplier)
     pred_reviewer_1x = int(r_stat["avg_reviewer_per_iter"] * entity_multiplier)
 
+    pred_vision = 650  # Estimasi inspeksi visual Agent Vision Reviewer (Gemini 3.5 Flash)
+
     pred_writer = pred_writer_1x * expected_iterations
     pred_reviewer = pred_reviewer_1x * expected_iterations
     pred_writer_total = pred_writer + pred_grader  # Grader memakai model Writer
-    pred_total_all = pred_writer_total + pred_reviewer
+    pred_total_all = pred_writer_total + pred_reviewer + pred_vision
 
     # Persentase terhadap Total Kuota & Sisa Kuota Model Writer
     w_total_quota = w_stat["total_quota"]
@@ -222,6 +224,7 @@ def predict_token_usage(
         "pred_writer": pred_writer,
         "pred_writer_total": pred_writer_total,
         "pred_reviewer": pred_reviewer,
+        "pred_vision": pred_vision,
         "pred_total_all": pred_total_all,
         "writer_pct_of_total": writer_pct_of_total,
         "writer_pct_of_remaining": writer_pct_of_remaining,

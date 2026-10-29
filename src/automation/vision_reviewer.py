@@ -94,6 +94,14 @@ Balas HANYA dengan JSON murni berikut tanpa tag pembungkus markdown:
         ])
 
         raw_content = response.content
+        vision_tokens = 0
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            vision_tokens = int(response.usage_metadata.get("total_tokens", 0))
+        elif hasattr(response, "response_metadata") and "token_usage" in response.response_metadata:
+            vision_tokens = int(response.response_metadata["token_usage"].get("total_tokens", 0))
+        if not vision_tokens:
+            vision_tokens = 650
+
         if isinstance(raw_content, list):
             text_parts = [item.get("text", "") if isinstance(item, dict) else str(item) for item in raw_content]
             raw_text = " ".join(text_parts)
@@ -132,6 +140,7 @@ Balas HANYA dengan JSON murni berikut tanpa tag pembungkus markdown:
                 "is_culturally_accurate": is_cultural,
                 "rejection_reason": rejection,
                 "audit_notes": notes,
+                "tokens_used": vision_tokens,
             }
 
             status_str = "LULUS" if is_pass else "DITOLAK"
