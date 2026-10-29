@@ -5,6 +5,8 @@ from typing import Dict, Any, List
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.agents.llm_factory import get_llm
 from src.agents.writer_agent import deduplicate_references
+from src.automation.travelista_adapter import build_travelista_ready_payload
+from src.automation.image_hunter import acquire_cover_image
 
 WIB_TZ = timezone(timedelta(hours=7))
 
@@ -213,22 +215,58 @@ DRAF ARTIKEL:
         f"{audit_data['audit_notes']}"
     )
 
-    # Skema JSON Standar untuk Pengembangan Auto-Deploy CMS ke Depannya
+    # 5. Akuisisi Cover Image 16:9 WebP (Hybrid Vision-RAG & Storage Ready)
+    image_meta = acquire_cover_image(
+        topic=topic,
+        title=final_title,
+        genre=genre,
+        slug=slug,
+        editorial_angle=editorial_angle,
+        prefer_real_first=True
+    )
+    cover_image_url = image_meta.get("cover_image_url")
+    cover_image_alt = image_meta.get("cover_image_alt")
+
+    # Skema JSON Standar Travelista 2026 & Auto-Deploy Readiness
+    travelista_payload = build_travelista_ready_payload(
+        final_title=final_title,
+        slug=slug,
+        genre=genre,
+        article_markdown=formatted_markdown,
+        meta_description=audit_data["meta_description"],
+        raw_tags=audit_data["tags"],
+        references=refs_list,
+        author_id=None,
+        cover_image_url=cover_image_url,
+        cover_image_alt=cover_image_alt,
+        status="review" if is_passed else "draft",
+    )
+
     cms_payload = {
-        "schema_version": "1.0-travelista-cms",
+        "schema_version": "2.0-travelista-cms",
         "status": "ready_to_publish" if is_passed else "draft_review",
         "generated_at": datetime.now(WIB_TZ).isoformat(),
         "article": {
             "title": final_title,
             "slug": slug,
             "genre": genre,
+            "category_id": travelista_payload["category"]["id"],
+            "category_name": travelista_payload["category"]["name_id"],
+            "category_slug": travelista_payload["category"]["slug"],
             "topic": topic,
             "meta_description": audit_data["meta_description"],
             "tags": audit_data["tags"],
+            "formatted_tags": travelista_payload["tags"],
             "paragraph_count": para_count,
             "content_markdown": formatted_markdown,
+            "content_html": travelista_payload["articles_record"]["content_html"],
             "references": refs_list,
+            "author_id": travelista_payload["author"]["id"],
+            "cover_image_url": cover_image_url,
+            "cover_image_alt": cover_image_alt,
+            "cover_image_meta": image_meta,
         },
+        "travelista_payload": travelista_payload,
         "verification": {
             "stage1_fact_checker": True,
             "stage2_final_gatekeeper": is_passed,
@@ -247,6 +285,12 @@ DRAF ARTIKEL:
         "tags": audit_data["tags"],
         "references": refs_list,
         "article_markdown": formatted_markdown,
+        "content_html": travelista_payload["articles_record"]["content_html"],
+        "category_id": travelista_payload["category"]["id"],
+        "cover_image_url": cover_image_url,
+        "cover_image_alt": cover_image_alt,
+        "cover_image_meta": image_meta,
         "cms_payload": cms_payload,
+        "travelista_payload": travelista_payload,
         "final_checker_tokens": tokens_used,
     }

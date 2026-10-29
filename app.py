@@ -15,6 +15,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from src.agents.orchestrator import build_graph
 from src.utils.metrics_logger import log_metrics
 from src.utils.token_tracker import get_model_usage_stats, predict_token_usage
+from src.automation.image_hunter import acquire_cover_image
 from src.automation.trend_hunter import TRAVELISTA_GENRES, analyze_and_select_daily_topic
 from src.automation.model_router import select_optimal_models
 from src.automation.daily_pipeline import run_autonomous_daily_pipeline
@@ -276,6 +277,28 @@ with tab_manual:
         saved_latency = st.session_state.get("total_latency", 0)
 
         st.subheader("📄 Hasil Akhir Artikel (Siap Terbit)")
+        
+        # Pratinjau Cover Image di Studio Manual
+        manual_cover_url = saved_state.get("cover_image_url")
+        if manual_cover_url:
+            st.image(manual_cover_url, caption=f"🖼️ Cover Image (16:9 WebP): {saved_state.get('cover_image_alt', '')}", use_container_width=True)
+        else:
+            if st.button("🖼️ Generate Gambar Sampul (16:9 WebP)", key="btn_gen_manual_cover"):
+                with st.spinner("Membuat gambar sampul 16:9 WebP yang akurat..."):
+                    manual_slug = "cover-" + str(int(time.time()))
+                    first_line = saved_state.get("draft", "").split("\n")[0].replace("#", "").strip()
+                    m_title = first_line if first_line else saved_state.get("topic", "Wisata")
+                    img_res = acquire_cover_image(
+                        topic=saved_state.get("topic", "Wisata"),
+                        title=m_title,
+                        genre="Wisata & Destinasi",
+                        slug=manual_slug,
+                    )
+                    saved_state["cover_image_url"] = img_res["cover_image_url"]
+                    saved_state["cover_image_alt"] = img_res["cover_image_alt"]
+                    saved_state["cover_image_meta"] = img_res
+                    st.rerun()
+
         st.info(saved_state.get("draft", "Gagal menghasilkan draf."))
         
         with st.expander("📚 Lihat Sumber Data Asli (Konteks)"):
@@ -444,16 +467,54 @@ with tab_auto:
             )
 
         with subtab_preview:
+            auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
+            auto_cover_alt = active_art.get("cover_image_alt") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_alt") or ""
+            source_badge = active_art.get("cover_image_meta", {}).get("source_type", "16:9 WebP")
+            if auto_cover_url:
+                st.image(auto_cover_url, caption=f"🖼️ Cover Image ({source_badge}): {auto_cover_alt}", use_container_width=True)
             st.markdown(article_md_text)
 
         with subtab_cms:
-            st.caption("Skema standar JSON ini telah terverifikasi oleh Checker Akhir dan siap dikirim ke API CMS (WordPress / Next.js / Ghost / Strapi) untuk pengembangan Auto-Deploy:")
+            st.caption("Skema standar JSON ini telah terverifikasi oleh Checker Akhir dan 100% kompatibel dengan monorepo **Travelista 2026** (Next.js CMS, Nuxt Magazine, Supabase `articles`):")
+            
             cms_data = active_art.get("cms_payload", {})
-            st.json(cms_data)
+            travelista_data = cms_data.get("travelista_payload", {})
+            cat_info = travelista_data.get("category", {})
+            tags_info = travelista_data.get("tags", [])
+            author_info = travelista_data.get("author", {})
+
+            # Kartu info keselarasan Travelista
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.markdown(f"🏷️ **Kategori Travelista**: `{cat_info.get('name_id', 'Destinasi')} (ID: {cat_info.get('id', 1)})`")
+                st.markdown(f"👤 **Author**: `{author_info.get('full_name', 'Travelista AI Editorial')}`")
+            with c2:
+                tag_preview = ", ".join([t.get("name", "") for t in tags_info[:4]])
+                st.markdown(f"🔖 **Tags Terformat**: `{tag_preview or '-'}`")
+                st.markdown(f"📝 **Status Target**: `review (Siap Review Redaksi)`")
+            with c3:
+                auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
+                if auto_cover_url:
+                    source_label = active_art.get("cover_image_meta", {}).get("source_type", "Ready")
+                    st.markdown(f"🖼️ **Cover Image**: `16:9 WebP ({source_label})`")
+                else:
+                    st.markdown("🖼️ **Cover Image**: `Belum di-generate`")
+                st.markdown(f"🌐 **Locale**: `id (Bahasa Indonesia)`")
+
+            st.info("💡 **Catatan Integrasi Travelista**: Data HTML (`content_html`) dan TipTap JSON (`content_json`) telah digenerate secara otomatis sehingga Next.js CMS dan Nuxt Magazine dapat langsung merender artikel tanpa error.")
+
+            # Tab untuk melihat JSON utuh atau Preview HTML
+            view_cms_tab, view_html_tab = st.tabs(["📦 Payload JSON Lengkap (Travelista Ready)", "🌐 Preview Render HTML"])
+            with view_cms_tab:
+                st.json(cms_data)
+            with view_html_tab:
+                html_code = travelista_data.get("articles_record", {}).get("content_html") or cms_data.get("article", {}).get("content_html", "")
+                st.code(html_code, language="html")
+
             st.download_button(
-                label="📥 Unduh Payload CMS (.json)",
+                label="📥 Unduh Payload Travelista (.json)",
                 data=json.dumps(cms_data, ensure_ascii=False, indent=2).encode("utf-8"),
-                file_name=f"{slug_name}_cms_payload.json",
+                file_name=f"{slug_name}_travelista_payload.json",
                 mime="application/json",
                 key=f"dl_json_{active_art.get('id', selected_idx)}"
             )

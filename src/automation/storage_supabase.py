@@ -48,6 +48,8 @@ def init_daily_articles_table() -> bool:
         final_title VARCHAR(500),
         slug VARCHAR(500),
         editorial_angle TEXT,
+        cover_image_url TEXT,
+        cover_image_alt TEXT,
         writer_model VARCHAR(150),
         reviewer_model VARCHAR(150),
         routing_reason TEXT,
@@ -73,6 +75,11 @@ def init_daily_articles_table() -> bool:
         with conn:
             with conn.cursor() as cur:
                 cur.execute(create_sql)
+                # Tambahkan kolom cover_image jika tabel sudah ada dari versi sebelumnya
+                cur.execute("""
+                    ALTER TABLE daily_auto_articles ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+                    ALTER TABLE daily_auto_articles ADD COLUMN IF NOT EXISTS cover_image_alt TEXT;
+                """)
         conn.close()
         return True
     except Exception as e:
@@ -167,6 +174,7 @@ def save_daily_article(record: Dict[str, Any]) -> Optional[int]:
         INSERT INTO daily_auto_articles (
             run_date, genre, trending_keyword, trend_source, topic,
             target_title, final_title, slug, editorial_angle,
+            cover_image_url, cover_image_alt,
             writer_model, reviewer_model, routing_reason,
             article_markdown, meta_description, tags_json, references_json,
             fact_check_passed, fact_check_revisions,
@@ -177,6 +185,7 @@ def save_daily_article(record: Dict[str, Any]) -> Optional[int]:
         ) VALUES (
             %s, %s, %s, %s, %s,
             %s, %s, %s, %s,
+            %s, %s,
             %s, %s, %s,
             %s, %s, %s, %s,
             %s, %s,
@@ -200,6 +209,8 @@ def save_daily_article(record: Dict[str, Any]) -> Optional[int]:
                         record.get("final_title", ""),
                         record.get("slug", ""),
                         record.get("editorial_angle", ""),
+                        record.get("cover_image_url"),
+                        record.get("cover_image_alt"),
                         record.get("writer_model", ""),
                         record.get("reviewer_model", ""),
                         record.get("routing_reason", ""),

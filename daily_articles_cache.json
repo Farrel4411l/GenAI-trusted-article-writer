@@ -56,7 +56,35 @@
             "title": "Percandian Batujaya",
             "url": "https://id.wikipedia.org/wiki/Percandian_Batujaya"
           }
-        ]
+        ],
+        "content_html": "<p>Selama ini Kabupaten Karawang mungkin lebih dikenal sebagai kawasan industri modern atau tempat bersejarah peristiwa Rengasdengklok. Namun, di balik hamparan hijau persawahan Desa Segaran dan Desa Talagajaya, tersimpan sebuah rahasia besar dari masa lampau: Kompleks Percandian Batujaya. Terletak hanya sekitar enam kilometer dari pesisir utara Jawa Barat dan 500 meter di utara Sungai Citarum, kawasan seluas lima kilometer persegi ini memuat jejak peradaban tertua di Nusantara yang dibangun pada era Kerajaan Tarumanagara. Kehadiran kompleks percandian Buddha yang megah di tengah kerajaan bercorak Hindu ini menjadi bukti nyata betapa tingginya nilai toleransi beragama di Tanah Pasundan sejak ribuan tahun lalu.</p>\n<p>Situs Batujaya menyimpan pesona misteri melalui dua lapisan budaya yang terekam dengan jelas, yakni masa prasejarah dan masa Hindu-Buddha dari abad permulaan masehi hingga abad ke-7. Di area ini, para arkeolog menemukan rangka manusia beserta bekal kubur prasejarah era abad ke-1 hingga ke-3 Masehi, seperti wadah tembikar lokal dan India Selatan, manik-manik, hingga peninggalan megalitik berupa menhir. Temuan tersebut menunjukkan bahwa sebelum struktur candi dibangun, kawasan yang dahulunya dikelilingi rawa dan danau purba ini telah lama difungsikan masyarakat setempat sebagai ruang suci dan tempat hunian.</p>\n<p>Satu hal yang paling memikat dari percandian Batujaya adalah keunikan arsitekturnya. Tidak seperti candi-candi di Jawa Tengah yang didominasi batu andesit, bangunan candi di Batujaya dibangun menggunakan material batu bata merah dengan perkuatan lapisan beton kuno (<em>stucco concrete</em>) dan dilapisi lepa (<em>stucco plaster</em>). Sebelum diteliti pertama kali oleh tim arkeologi Universitas Indonesia pada tahun 1984, sisa-sisa bangunan kuno ini tersembunyi di bawah gundukan tanah yang oleh masyarakat lokal dinamai <em>unur</em>. Hingga kini, teridentifikasi puluhan <em>unur</em> yang terbagi dalam Kelompok Situs Segaran dan Kelompok Situs Telagajaya, mempertegas betapa luasnya kompleks sejarah yang kini berada di bawah naungan Museum dan Cagar Budaya Kementerian Kebudayaan Republik Indonesia ini.</p>\n<p>Di antara puluhan sisa bangunan yang ditemukan, Candi Jiwa (Batujaya I) dan Candi Blandongan (Batujaya V) menjadi mahakarya yang paling menyedot perhatian. Candi Jiwa memiliki bagian atas menyerupai bunga padma (teratai) yang mekar tanpa tangga masuk, menciptakan ilusi seperti arca Buddha yang mengapung di atas air. Di candi ini, umat Buddha melakukan ritual persembahyangan <em>pradaksina</em> dengan mengelilingi bangunan searah jarum jam. Sementara itu, Candi Blandongan yang berjarak sekitar 100 meter memiliki empat tangga dan diduga kuat berfungsi sebagai candi pendharmaan Raja Purnawarman. Di lokasi Candi Blandongan inilah ditemukan benda berharga berupa lempengan emas 16 karat berinskripsi Pallawa dan bahasa Sanskerta, serta berbagai <em>amulet</em> berukir figur Buddha, Dewa Brahma Sahampati, dan Dewa Sakra.</p>\n<p>Bagi Anda pencinta wisata sejarah dan misteri lokal yang ingin menjelajahi peninggalan megah ini, perjalanannya bisa ditempuh menggunakan kendaraan pribadi dari Jakarta melalui Tol Cikampek, keluar di Gerbang Tol Karawang Barat, lalu melaju ke arah Rengasdengklok hingga tiba di Kecamatan Batujaya. Meskipun jaraknya secara garis lurus hanya sekitar 50 km dari Jakarta, kondisi jalan membuat waktu tempuh berkisar hingga tiga jam, namun rasa lelah akan langsung terbayar saat menyaksikan langsung hamparan candi bata merah tertua di Indonesia ini. Menjelajahi Situs Batujaya tidak hanya memberi pengalaman spiritual dan edukasi peradaban kuno, tetapi juga mengingatkan kita akan pentingnya menjaga dan mempromosikan potensi cagar budaya unggulan ini agar tetap lestari sepanjang zaman.</p>\n<hr />\n<p><strong>Sumber Referensi:</strong></p>\n<ol>\n<li><a href=\"https://id.wikipedia.org/wiki/Percandian_Batujaya\">Percandian Batujaya</a></li>\n</ol>",
+        "category_id": 3,
+        "category_name": "Budaya",
+        "formatted_tags": [
+          {
+            "name": "Batujaya",
+            "slug": "batujaya"
+          },
+          {
+            "name": "Karawang",
+            "slug": "karawang"
+          },
+          {
+            "name": "Candi Jiwa",
+            "slug": "candi-jiwa"
+          },
+          {
+            "name": "Sejarah Indonesia",
+            "slug": "sejarah-indonesia"
+          },
+          {
+            "name": "Wisata Budaya",
+            "slug": "wisata-budaya"
+          }
+        ],
+        "author_id": "00000000-0000-0000-0000-000000000001",
+        "cover_image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Candi_Blandongan.JPG/1280px-Candi_Blandongan.JPG?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
+        "cover_image_alt": "Pemandangan Candi Blandongan di Kompleks Percandian Batujaya Karawang"
       },
       "verification": {
         "stage1_fact_checker": true,
@@ -162,6 +190,196 @@
           "Dataran Tinggi Dieng dan Candi Dieng"
         ],
         "is_unique_non_identical_title": true
+      },
+      "travelista_payload": {
+        "schema_version": "2.0-travelista-monorepo-ready",
+        "compatibility": "travelista-2026",
+        "category": {
+          "id": 3,
+          "name_id": "Budaya",
+          "slug": "budaya"
+        },
+        "tags": [
+          {
+            "name": "Batujaya",
+            "slug": "batujaya"
+          },
+          {
+            "name": "Karawang",
+            "slug": "karawang"
+          },
+          {
+            "name": "Candi Jiwa",
+            "slug": "candi-jiwa"
+          },
+          {
+            "name": "Sejarah Indonesia",
+            "slug": "sejarah-indonesia"
+          },
+          {
+            "name": "Wisata Budaya",
+            "slug": "wisata-budaya"
+          }
+        ],
+        "author": {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "full_name": "Travelista AI Editorial",
+          "role": "writer"
+        },
+        "articles_record": {
+          "title": "Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan",
+          "slug": "misteri-situs-batujaya-karawang-jejak-candi-jiwa-dan-peradaban-tarumanagara-di-tanah-pasun",
+          "excerpt": "Temukan misteri dan nilai sejarah Kompleks Candi Batujaya di Karawang, jejak peradaban Tarumanagara dengan arsitektur bata merah unik, kini destinasi cagar budaya unggulan.",
+          "content_html": "<p>Selama ini Kabupaten Karawang mungkin lebih dikenal sebagai kawasan industri modern atau tempat bersejarah peristiwa Rengasdengklok. Namun, di balik hamparan hijau persawahan Desa Segaran dan Desa Talagajaya, tersimpan sebuah rahasia besar dari masa lampau: Kompleks Percandian Batujaya. Terletak hanya sekitar enam kilometer dari pesisir utara Jawa Barat dan 500 meter di utara Sungai Citarum, kawasan seluas lima kilometer persegi ini memuat jejak peradaban tertua di Nusantara yang dibangun pada era Kerajaan Tarumanagara. Kehadiran kompleks percandian Buddha yang megah di tengah kerajaan bercorak Hindu ini menjadi bukti nyata betapa tingginya nilai toleransi beragama di Tanah Pasundan sejak ribuan tahun lalu.</p>\n<p>Situs Batujaya menyimpan pesona misteri melalui dua lapisan budaya yang terekam dengan jelas, yakni masa prasejarah dan masa Hindu-Buddha dari abad permulaan masehi hingga abad ke-7. Di area ini, para arkeolog menemukan rangka manusia beserta bekal kubur prasejarah era abad ke-1 hingga ke-3 Masehi, seperti wadah tembikar lokal dan India Selatan, manik-manik, hingga peninggalan megalitik berupa menhir. Temuan tersebut menunjukkan bahwa sebelum struktur candi dibangun, kawasan yang dahulunya dikelilingi rawa dan danau purba ini telah lama difungsikan masyarakat setempat sebagai ruang suci dan tempat hunian.</p>\n<p>Satu hal yang paling memikat dari percandian Batujaya adalah keunikan arsitekturnya. Tidak seperti candi-candi di Jawa Tengah yang didominasi batu andesit, bangunan candi di Batujaya dibangun menggunakan material batu bata merah dengan perkuatan lapisan beton kuno (<em>stucco concrete</em>) dan dilapisi lepa (<em>stucco plaster</em>). Sebelum diteliti pertama kali oleh tim arkeologi Universitas Indonesia pada tahun 1984, sisa-sisa bangunan kuno ini tersembunyi di bawah gundukan tanah yang oleh masyarakat lokal dinamai <em>unur</em>. Hingga kini, teridentifikasi puluhan <em>unur</em> yang terbagi dalam Kelompok Situs Segaran dan Kelompok Situs Telagajaya, mempertegas betapa luasnya kompleks sejarah yang kini berada di bawah naungan Museum dan Cagar Budaya Kementerian Kebudayaan Republik Indonesia ini.</p>\n<p>Di antara puluhan sisa bangunan yang ditemukan, Candi Jiwa (Batujaya I) dan Candi Blandongan (Batujaya V) menjadi mahakarya yang paling menyedot perhatian. Candi Jiwa memiliki bagian atas menyerupai bunga padma (teratai) yang mekar tanpa tangga masuk, menciptakan ilusi seperti arca Buddha yang mengapung di atas air. Di candi ini, umat Buddha melakukan ritual persembahyangan <em>pradaksina</em> dengan mengelilingi bangunan searah jarum jam. Sementara itu, Candi Blandongan yang berjarak sekitar 100 meter memiliki empat tangga dan diduga kuat berfungsi sebagai candi pendharmaan Raja Purnawarman. Di lokasi Candi Blandongan inilah ditemukan benda berharga berupa lempengan emas 16 karat berinskripsi Pallawa dan bahasa Sanskerta, serta berbagai <em>amulet</em> berukir figur Buddha, Dewa Brahma Sahampati, dan Dewa Sakra.</p>\n<p>Bagi Anda pencinta wisata sejarah dan misteri lokal yang ingin menjelajahi peninggalan megah ini, perjalanannya bisa ditempuh menggunakan kendaraan pribadi dari Jakarta melalui Tol Cikampek, keluar di Gerbang Tol Karawang Barat, lalu melaju ke arah Rengasdengklok hingga tiba di Kecamatan Batujaya. Meskipun jaraknya secara garis lurus hanya sekitar 50 km dari Jakarta, kondisi jalan membuat waktu tempuh berkisar hingga tiga jam, namun rasa lelah akan langsung terbayar saat menyaksikan langsung hamparan candi bata merah tertua di Indonesia ini. Menjelajahi Situs Batujaya tidak hanya memberi pengalaman spiritual dan edukasi peradaban kuno, tetapi juga mengingatkan kita akan pentingnya menjaga dan mempromosikan potensi cagar budaya unggulan ini agar tetap lestari sepanjang zaman.</p>\n<hr />\n<p><strong>Sumber Referensi:</strong></p>\n<ol>\n<li><a href=\"https://id.wikipedia.org/wiki/Percandian_Batujaya\">Percandian Batujaya</a></li>\n</ol>",
+          "content_json": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Selama ini Kabupaten Karawang mungkin lebih dikenal sebagai kawasan industri modern atau tempat bersejarah peristiwa Rengasdengklok. Namun, di balik hamparan hijau persawahan Desa Segaran dan Desa Talagajaya, tersimpan sebuah rahasia besar dari masa lampau: Kompleks Percandian Batujaya. Terletak hanya sekitar enam kilometer dari pesisir utara Jawa Barat dan 500 meter di utara Sungai Citarum, kawasan seluas lima kilometer persegi ini memuat jejak peradaban tertua di Nusantara yang dibangun pada era Kerajaan Tarumanagara. Kehadiran kompleks percandian Buddha yang megah di tengah kerajaan bercorak Hindu ini menjadi bukti nyata betapa tingginya nilai toleransi beragama di Tanah Pasundan sejak ribuan tahun lalu."
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Situs Batujaya menyimpan pesona misteri melalui dua lapisan budaya yang terekam dengan jelas, yakni masa prasejarah dan masa Hindu-Buddha dari abad permulaan masehi hingga abad ke-7. Di area ini, para arkeolog menemukan rangka manusia beserta bekal kubur prasejarah era abad ke-1 hingga ke-3 Masehi, seperti wadah tembikar lokal dan India Selatan, manik-manik, hingga peninggalan megalitik berupa menhir. Temuan tersebut menunjukkan bahwa sebelum struktur candi dibangun, kawasan yang dahulunya dikelilingi rawa dan danau purba ini telah lama difungsikan masyarakat setempat sebagai ruang suci dan tempat hunian."
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Satu hal yang paling memikat dari percandian Batujaya adalah keunikan arsitekturnya. Tidak seperti candi-candi di Jawa Tengah yang didominasi batu andesit, bangunan candi di Batujaya dibangun menggunakan material batu bata merah dengan perkuatan lapisan beton kuno ("
+                  },
+                  {
+                    "type": "text",
+                    "text": "stucco concrete"
+                  },
+                  {
+                    "type": "text",
+                    "text": ") dan dilapisi lepa ("
+                  },
+                  {
+                    "type": "text",
+                    "text": "stucco plaster"
+                  },
+                  {
+                    "type": "text",
+                    "text": "). Sebelum diteliti pertama kali oleh tim arkeologi Universitas Indonesia pada tahun 1984, sisa-sisa bangunan kuno ini tersembunyi di bawah gundukan tanah yang oleh masyarakat lokal dinamai "
+                  },
+                  {
+                    "type": "text",
+                    "text": "unur"
+                  },
+                  {
+                    "type": "text",
+                    "text": ". Hingga kini, teridentifikasi puluhan "
+                  },
+                  {
+                    "type": "text",
+                    "text": "unur"
+                  },
+                  {
+                    "type": "text",
+                    "text": " yang terbagi dalam Kelompok Situs Segaran dan Kelompok Situs Telagajaya, mempertegas betapa luasnya kompleks sejarah yang kini berada di bawah naungan Museum dan Cagar Budaya Kementerian Kebudayaan Republik Indonesia ini."
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Di antara puluhan sisa bangunan yang ditemukan, Candi Jiwa (Batujaya I) dan Candi Blandongan (Batujaya V) menjadi mahakarya yang paling menyedot perhatian. Candi Jiwa memiliki bagian atas menyerupai bunga padma (teratai) yang mekar tanpa tangga masuk, menciptakan ilusi seperti arca Buddha yang mengapung di atas air. Di candi ini, umat Buddha melakukan ritual persembahyangan "
+                  },
+                  {
+                    "type": "text",
+                    "text": "pradaksina"
+                  },
+                  {
+                    "type": "text",
+                    "text": " dengan mengelilingi bangunan searah jarum jam. Sementara itu, Candi Blandongan yang berjarak sekitar 100 meter memiliki empat tangga dan diduga kuat berfungsi sebagai candi pendharmaan Raja Purnawarman. Di lokasi Candi Blandongan inilah ditemukan benda berharga berupa lempengan emas 16 karat berinskripsi Pallawa dan bahasa Sanskerta, serta berbagai "
+                  },
+                  {
+                    "type": "text",
+                    "text": "amulet"
+                  },
+                  {
+                    "type": "text",
+                    "text": " berukir figur Buddha, Dewa Brahma Sahampati, dan Dewa Sakra."
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Bagi Anda pencinta wisata sejarah dan misteri lokal yang ingin menjelajahi peninggalan megah ini, perjalanannya bisa ditempuh menggunakan kendaraan pribadi dari Jakarta melalui Tol Cikampek, keluar di Gerbang Tol Karawang Barat, lalu melaju ke arah Rengasdengklok hingga tiba di Kecamatan Batujaya. Meskipun jaraknya secara garis lurus hanya sekitar 50 km dari Jakarta, kondisi jalan membuat waktu tempuh berkisar hingga tiga jam, namun rasa lelah akan langsung terbayar saat menyaksikan langsung hamparan candi bata merah tertua di Indonesia ini. Menjelajahi Situs Batujaya tidak hanya memberi pengalaman spiritual dan edukasi peradaban kuno, tetapi juga mengingatkan kita akan pentingnya menjaga dan mempromosikan potensi cagar budaya unggulan ini agar tetap lestari sepanjang zaman."
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Sumber Referensi:"
+                  }
+                ]
+              },
+              {
+                "type": "orderedList",
+                "content": [
+                  {
+                    "type": "listItem",
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "[Percandian Batujaya](https://id.wikipedia.org/wiki/Percandian_Batujaya)"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "cover_image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Candi_Blandongan.JPG/1280px-Candi_Blandongan.JPG?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
+          "cover_image_alt": "Pemandangan Candi Blandongan di Kompleks Percandian Batujaya Karawang",
+          "category_id": 3,
+          "author_id": "00000000-0000-0000-0000-000000000001",
+          "status": "review",
+          "locale": "id",
+          "is_featured": false,
+          "is_breaking": false,
+          "meta_title": "Misteri Situs Batujaya Karawang: Jejak Candi Jiwa dan Peradaban Tarumanagara di Tanah Pasundan",
+          "meta_description": "Temukan misteri dan nilai sejarah Kompleks Candi Batujaya di Karawang, jejak peradaban Tarumanagara dengan arsitektur bata merah unik, kini destinasi cagar budaya unggulan.",
+          "read_time_minutes": 3,
+          "published_at": null
+        },
+        "references": [
+          {
+            "title": "Percandian Batujaya",
+            "url": "https://id.wikipedia.org/wiki/Percandian_Batujaya"
+          }
+        ],
+        "notes": {
+          "cover_image_reminder": "Riset cover image ditahan sementara sesuai arahan user.",
+          "workflow_step": "Siap di-review oleh Editor / Admin di CMS Travelista."
+        }
       }
     },
     "writer_tokens": 7094,
@@ -170,6 +388,14 @@
     "final_checker_tokens": 2257,
     "total_latency": 94.48,
     "id": 2,
-    "created_at": "2026-10-28 09:52:45 WIB"
+    "created_at": "2026-10-28 09:52:45 WIB",
+    "cover_image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Candi_Blandongan.JPG/1280px-Candi_Blandongan.JPG?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
+    "cover_image_alt": "Pemandangan Candi Blandongan di Kompleks Percandian Batujaya Karawang",
+    "cover_image_meta": {
+      "source_type": "wikimedia_real",
+      "dimensions": "1200x675",
+      "format": "webp",
+      "file_size_kb": 154.02
+    }
   }
 ]

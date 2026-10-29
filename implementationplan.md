@@ -67,11 +67,22 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - Menggunakan GitHub Actions dengan jadwal `cron: '0 3 * * *'` (03:00 UTC = **10:00 WIB** setiap hari).
 - Menjalankan `python run_daily_job.py` secara otomatis di cloud dan menyimpan hasilnya ke Supabase sehingga tim redaksi tinggal menyalin (*copy-paste*) artikel yang sudah matang di Streamlit UI.
 
+### Tahap 7: Automated 16:9 WebP Cover Image Pipeline (`src/automation/image_hunter.py`)
+- **Standar Format Travelista 2026**: Rasio aspek **16:9 landscape** (`1200 x 675` px), format kompresi **WebP (< 400 KB)** untuk LCP performa tinggi, serta SEO `cover_image_alt`.
+- **Pendekatan Hybrid (Akurat & Cocok)**:
+  - *Tier 1 (Akurasi Sejarah Nyata)*: Mengambil foto dokumenter berlisensi bebas dari Wikimedia Commons / Wikipedia API untuk cagar budaya & sejarah spesifik (100% akurat tanpa halusinasi visual).
+  - *Tier 2 (AI Generatif Fotorealistis)*: Menggunakan AI Vision Generator (FLUX / SDXL 16:9) dengan prompt fotografi jurnalistik Travelista berdasar konteks fakta RAG (cocok untuk kuliner & wisata alam).
+- **Integrasi Supabase Storage & Payloads**:
+  - Menyimpan salinan lokal WebP di `static/covers/` dan mengunggah ke bucket `article-covers` di Supabase Storage.
+  - Mengisi field `cover_image_url` dan `cover_image_alt` di skema `public.articles` serta pratinjau di Streamlit UI.
+
 ---
 
 ## 4. Daftar File yang Dibuat / Diperbarui
 - [x] `implementationplan.md` & `implementation_plan_travelista.md` (Dokumentasi Blueprint)
 - [x] `src/automation/__init__.py`
+- [x] `src/automation/image_hunter.py` (Modul Hybrid Vision-RAG, konversi WebP 16:9, dan upload storage)
+- [x] `src/automation/travelista_adapter.py` (Adapter TipTap AST JSON & Nuxt HTML kompatibel Monorepo 2026)
 - [x] `src/automation/storage_supabase.py` (Manajemen tabel `daily_auto_articles` di Supabase)
 - [x] `src/automation/trend_hunter.py` (Pencari tren Google Trends/News ID & perumus Genre/Topik/Judul)
 - [x] `src/automation/model_router.py` (Pemilih otomatis Model Writer & Reviewer berbasis Genre & Kuota)
@@ -79,4 +90,4 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - [x] `src/automation/daily_pipeline.py` (Orkestrator otomasi harian End-to-End)
 - [x] `run_daily_job.py` (Script CLI eksekutor harian untuk Cron Job pukul 10:00 WIB)
 - [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron 10:00 WIB)
-- [x] `app.py` (Penambahan Tab `🤖 Redaksi Otomatis Harian (10:00 WIB)` tanpa mengubah fitur Tab Manual)
+- [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP dan Payload Monorepo Travelista)
