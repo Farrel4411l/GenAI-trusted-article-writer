@@ -510,10 +510,11 @@ with tab_auto:
         with subtab_preview:
             auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
             auto_cover_alt = active_art.get("cover_image_alt") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_alt") or ""
-            source_badge = active_art.get("cover_image_meta", {}).get("source_type", "16:9 WebP")
+            img_meta = active_art.get("cover_image_meta") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_meta", {})
+            source_badge = img_meta.get("source_type", "16:9 WebP")
             if auto_cover_url:
                 st.image(auto_cover_url, caption=f"🖼️ Cover Image ({source_badge}): {auto_cover_alt}", use_container_width=True)
-                v_audit = active_art.get("cover_image_meta", {}).get("vision_audit", {})
+                v_audit = img_meta.get("vision_audit") or active_art.get("cms_payload", {}).get("verification", {}).get("stage3_vision_reviewer", {})
                 if v_audit:
                     v_score = v_audit.get("score", 90)
                     v_pass = v_audit.get("is_passed", True)
@@ -521,6 +522,30 @@ with tab_auto:
                     v_icon = "🛡️" if v_pass else "⚠️"
                     v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
                     st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
+            else:
+                st.warning("⚠️ **Cover Image Belum Tersedia**: Artikel ini dibuat sebelum modul Image Hunter aktif.")
+                if st.button("🖼️ Dapatkan Foto Sampul 16:9 WebP Sekarang", key=f"btn_get_cover_{active_art.get('id', selected_idx)}"):
+                    with st.spinner("Mengakuisisi foto dokumenter 16:9 WebP dan memverifikasinya dengan Vision Reviewer..."):
+                        new_img = acquire_cover_image(
+                            topic=active_art.get("topic", "Wisata"),
+                            title=active_art.get("final_title", "Wisata"),
+                            genre=active_art.get("genre", "Wisata & Destinasi"),
+                            slug=active_art.get("slug", "cover"),
+                            prefer_real_first=True
+                        )
+                        from src.automation.storage_supabase import get_db_connection
+                        try:
+                            conn = get_db_connection()
+                            with conn:
+                                with conn.cursor() as cur:
+                                    cur.execute("UPDATE daily_auto_articles SET cover_image_url=%s, cover_image_alt=%s WHERE id=%s", (new_img['cover_image_url'], new_img['cover_image_alt'], active_art.get('id')))
+                            conn.close()
+                        except Exception as e_up:
+                            print(f"Error update cover: {e_up}")
+                        active_art['cover_image_url'] = new_img['cover_image_url']
+                        active_art['cover_image_alt'] = new_img['cover_image_alt']
+                        active_art['cover_image_meta'] = new_img
+                        st.rerun()
             st.markdown(article_md_text)
 
         with subtab_cms:
