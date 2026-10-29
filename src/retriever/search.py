@@ -13,8 +13,16 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
-wikipedia.set_user_agent("TravelistaBot/1.0 (travelista@example.com)")
-wikipedia.set_lang("id")
+
+def _ensure_wikipedia_https():
+    try:
+        wikipedia.set_lang("id")
+        wikipedia.wikipedia.API_URL = "https://id.wikipedia.org/w/api.php"
+        wikipedia.set_user_agent("TravelistaBot/2.0 (editorial@travelista.id)")
+    except Exception:
+        pass
+
+_ensure_wikipedia_https()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
@@ -67,6 +75,34 @@ def extract_subqueries(query: str) -> List[str]:
     if not subqueries:
         subqueries = [cleaned]
     return subqueries
+
+def expand_search_terms(query: str) -> List[str]:
+    """
+    Menghasilkan daftar kata kunci pencarian yang bervariasi.
+    Jika topik majemuk (misal: 'A dan B'), dipecah per entitas.
+    Jika topik tunggal, ditambahkan istilah pendamping kontekstual agar menghasilkan multi-sumber.
+    """
+    base_subqueries = extract_subqueries(query)
+    if len(base_subqueries) > 1:
+        return base_subqueries
+
+    clean_q = base_subqueries[0]
+    terms = [clean_q]
+    
+    _ensure_wikipedia_https()
+    try:
+        search_results = wikipedia.search(clean_q, results=4)
+        for res in search_results:
+            if res.lower() != clean_q.lower() and res not in terms:
+                # Hindari kata umum
+                if len(res) >= 4 and not any(generic == res.lower() for generic in ["candi", "indonesia", "jawa", "makanan", "daftar"]):
+                    terms.append(res)
+            if len(terms) >= 3:
+                break
+    except Exception as e:
+        print(f"[Retriever] Info ekspansi kata kunci: {e}")
+
+    return terms
 
 def group_docs_by_source(docs: List[Document]) -> OrderedDict[str, List[Document]]:
     """Mengelompokkan chunk berdasarkan judul artikel unik."""
@@ -276,13 +312,14 @@ def diversify_chunks(grouped_sources: OrderedDict[str, List[Document]], k: int =
 
 def search_context(query: str, model_id: str, k: int = 15) -> Tuple[str, int]:
     """Mengembalikan konteks multi-sumber yang bervariasi dan jumlah token yang dipakai grader."""
+    _ensure_wikipedia_https()
     subqueries = extract_subqueries(query)
+    search_queries = expand_search_terms(query)
     store = get_vectorstore()
 
-    # 1. Tarik kandidat dari PGVector untuk query utama dan tiap sub-topik
+    # 1. Tarik kandidat dari PGVector untuk query utama dan tiap sub-topik / ekspansi
     raw_docs: List[Document] = []
-    search_queries = [query] + [sq for sq in subqueries if sq.lower() != query.lower()]
-    per_query_k = max(8, k // len(search_queries) + 3)
+    per_query_k = max(6, k // len(search_queries) + 3)
 
     for sq in search_queries:
         try:
@@ -292,17 +329,16 @@ def search_context(query: str, model_id: str, k: int = 15) -> Tuple[str, int]:
 
     grouped = group_docs_by_source(raw_docs)
 
-    # 2. Cek apakah tiap sub-topik sudah punya sumber kuat & apakah variasi sumber sudah >= MIN_UNIQUE_SOURCES
-    missing_subqueries = [sq for sq in subqueries if not has_strong_match(grouped, sq)]
+    # 2. Cek apakah variasi sumber sudah >= MIN_UNIQUE_SOURCES
+    missing_subqueries = [sq for sq in search_queries if not has_strong_match(grouped, sq)]
     matching_sources_count = sum(
         1 for title, chs in grouped.items()
-        if any(has_strong_match({title: chs}, sq) for sq in subqueries)
+        if any(has_strong_match({title: chs}, sq) for sq in search_queries)
     )
 
     existing_titles = set(grouped.keys())
     if missing_subqueries or matching_sources_count < MIN_UNIQUE_SOURCES:
         terms_to_fetch = missing_subqueries if missing_subqueries else search_queries
-        # Pastikan query utama juga ikut dicari untuk menambah variasi artikel terkait
         for sq in search_queries:
             if sq not in terms_to_fetch:
                 terms_to_fetch.append(sq)
@@ -310,7 +346,6 @@ def search_context(query: str, model_id: str, k: int = 15) -> Tuple[str, int]:
         print(f"[Dynamic Fallback] Memperkaya variasi referensi dari Wikipedia untuk: {terms_to_fetch}...")
         wiki_chunks = fetch_wikipedia_multi(terms_to_fetch, existing_titles, max_new_pages=min(needed_pages, 4))
         if wiki_chunks:
-            # Tempatkan hasil Wikipedia baru di urutan teratas agar diprioritaskan
             grouped = group_docs_by_source(wiki_chunks + raw_docs)
 
     # 3. Evaluasi kandidat sumber dengan Agent Grader
@@ -324,6 +359,15 @@ def search_context(query: str, model_id: str, k: int = 15) -> Tuple[str, int]:
             wiki_grouped = group_docs_by_source(wiki_chunks)
             approved_sources, extra_tokens = grade_candidate_sources(query, wiki_grouped, model_id)
             grader_tokens += extra_tokens
+
+    # 4b. JAMINAN MULTI-SUMBER: Jika Grader hanya meloloskan 1 sumber padahal ada kandidat lain di grouped
+    if len(approved_sources) < 2 and len(grouped) >= 2:
+        for title, chs in grouped.items():
+            if title not in approved_sources:
+                approved_sources[title] = chs
+                print(f"[Dynamic Multi-Source] Menambahkan sumber pendamping '{title}' agar artikel memiliki variasi referensi.")
+                if len(approved_sources) >= 2:
+                    break
 
     # 5. Susun chunk secara bervariasi (Round-Robin antar sumber unik)
     final_docs = diversify_chunks(approved_sources, k=k)
