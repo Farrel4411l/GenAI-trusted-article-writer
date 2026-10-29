@@ -251,6 +251,26 @@ with tab_manual:
                                     st.error(f"🕵️‍♂️ **Agent Reviewer ({reviewer_choice})**: KEPUTUSAN: **DITOLAK / REVISI**")
                                     st.warning(f"Catatan Pemred: {final_state.get('revision_notes', '')}")
                     
+                    # Otomatis akuisisi Cover Image 16:9 WebP & Verifikasi Vision Reviewer jika artikel lulus
+                    if final_state.get('is_passed') or final_state.get('draft'):
+                        st.write("🖼️ **Image Hunter & Vision Reviewer**: Mengakuisisi dan memverifikasi gambar sampul 16:9 WebP...")
+                        try:
+                            manual_slug = "cover-" + str(int(time.time()))
+                            first_line = final_state.get("draft", "").split("\n")[0].replace("#", "").strip()
+                            m_title = first_line if first_line else user_query
+                            img_res = acquire_cover_image(
+                                topic=user_query,
+                                title=m_title,
+                                genre="Wisata & Destinasi",
+                                slug=manual_slug,
+                                prefer_real_first=True
+                            )
+                            final_state["cover_image_url"] = img_res["cover_image_url"]
+                            final_state["cover_image_alt"] = img_res["cover_image_alt"]
+                            final_state["cover_image_meta"] = img_res
+                        except Exception as img_err:
+                            print(f"[Studio Manual] Info akuisisi gambar: {img_err}")
+                    
                     status.update(label=f"Proses Selesai dalam {final_state.get('revision_count', 2) - 1} iterasi!", state="complete", expanded=False)
                     
                 except Exception as e:
@@ -278,36 +298,49 @@ with tab_manual:
 
         st.subheader("📄 Hasil Akhir Artikel (Siap Terbit)")
         
-        # Pratinjau Cover Image di Studio Manual
-        manual_cover_url = saved_state.get("cover_image_url")
-        if manual_cover_url:
-            st.image(manual_cover_url, caption=f"🖼️ Cover Image (16:9 WebP): {saved_state.get('cover_image_alt', '')}", use_container_width=True)
-            v_audit = saved_state.get("cover_image_meta", {}).get("vision_audit", {})
-            if v_audit:
-                v_score = v_audit.get("score", 90)
-                v_pass = v_audit.get("is_passed", True)
-                v_notes = v_audit.get("audit_notes", "")
-                v_icon = "🛡️" if v_pass else "⚠️"
-                v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
-                st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
-        else:
-            if st.button("🖼️ Generate Gambar Sampul (16:9 WebP)", key="btn_gen_manual_cover"):
-                with st.spinner("Membuat gambar sampul 16:9 WebP yang akurat..."):
-                    manual_slug = "cover-" + str(int(time.time()))
-                    first_line = saved_state.get("draft", "").split("\n")[0].replace("#", "").strip()
-                    m_title = first_line if first_line else saved_state.get("topic", "Wisata")
-                    img_res = acquire_cover_image(
-                        topic=saved_state.get("topic", "Wisata"),
-                        title=m_title,
-                        genre="Wisata & Destinasi",
-                        slug=manual_slug,
-                    )
-                    saved_state["cover_image_url"] = img_res["cover_image_url"]
-                    saved_state["cover_image_alt"] = img_res["cover_image_alt"]
-                    saved_state["cover_image_meta"] = img_res
-                    st.rerun()
+        # Pratinjau Tampilan Majalah Digital (Hero Cover Image + Artikel Utuh)
+        with st.container(border=True):
+            manual_cover_url = saved_state.get("cover_image_url")
+            if manual_cover_url:
+                st.image(manual_cover_url, caption=f"🖼️ Cover Image (16:9 WebP): {saved_state.get('cover_image_alt', '')}", use_container_width=True)
+                v_audit = saved_state.get("cover_image_meta", {}).get("vision_audit", {})
+                if v_audit:
+                    v_score = v_audit.get("score", 90)
+                    v_pass = v_audit.get("is_passed", True)
+                    v_notes = v_audit.get("audit_notes", "")
+                    v_icon = "🛡️" if v_pass else "⚠️"
+                    v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
+                    st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
+            else:
+                if st.button("🖼️ Generate Gambar Sampul (16:9 WebP)", key="btn_gen_manual_cover"):
+                    with st.spinner("Membuat gambar sampul 16:9 WebP yang akurat..."):
+                        manual_slug = "cover-" + str(int(time.time()))
+                        first_line = saved_state.get("draft", "").split("\n")[0].replace("#", "").strip()
+                        m_title = first_line if first_line else saved_state.get("topic", "Wisata")
+                        img_res = acquire_cover_image(
+                            topic=saved_state.get("topic", "Wisata"),
+                            title=m_title,
+                            genre="Wisata & Destinasi",
+                            slug=manual_slug,
+                        )
+                        saved_state["cover_image_url"] = img_res["cover_image_url"]
+                        saved_state["cover_image_alt"] = img_res["cover_image_alt"]
+                        saved_state["cover_image_meta"] = img_res
+                        st.rerun()
 
-        st.info(saved_state.get("draft", "Gagal menghasilkan draf."))
+            # Render Artikel Lengkap dengan Gaya Majalah Digital
+            st.markdown(saved_state.get("draft", "Gagal menghasilkan draf."))
+
+        with st.expander("📋 Salin Teks Utuh Markdown (1-Klik Copy)"):
+            draft_text = saved_state.get("draft", "")
+            st.code(draft_text, language="markdown")
+            st.download_button(
+                label="📥 Unduh Artikel (.md)",
+                data=draft_text.encode("utf-8"),
+                file_name="artikel_travelista.md",
+                mime="text/markdown",
+                key="btn_download_manual_md"
+            )
         
         with st.expander("📚 Lihat Sumber Data Asli (Konteks)"):
             st.write(saved_state.get("context", "Konteks kosong."))
