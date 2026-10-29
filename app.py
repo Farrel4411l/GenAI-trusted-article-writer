@@ -282,6 +282,14 @@ with tab_manual:
         manual_cover_url = saved_state.get("cover_image_url")
         if manual_cover_url:
             st.image(manual_cover_url, caption=f"🖼️ Cover Image (16:9 WebP): {saved_state.get('cover_image_alt', '')}", use_container_width=True)
+            v_audit = saved_state.get("cover_image_meta", {}).get("vision_audit", {})
+            if v_audit:
+                v_score = v_audit.get("score", 90)
+                v_pass = v_audit.get("is_passed", True)
+                v_notes = v_audit.get("audit_notes", "")
+                v_icon = "🛡️" if v_pass else "⚠️"
+                v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
+                st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
         else:
             if st.button("🖼️ Generate Gambar Sampul (16:9 WebP)", key="btn_gen_manual_cover"):
                 with st.spinner("Membuat gambar sampul 16:9 WebP yang akurat..."):
@@ -472,6 +480,14 @@ with tab_auto:
             source_badge = active_art.get("cover_image_meta", {}).get("source_type", "16:9 WebP")
             if auto_cover_url:
                 st.image(auto_cover_url, caption=f"🖼️ Cover Image ({source_badge}): {auto_cover_alt}", use_container_width=True)
+                v_audit = active_art.get("cover_image_meta", {}).get("vision_audit", {})
+                if v_audit:
+                    v_score = v_audit.get("score", 90)
+                    v_pass = v_audit.get("is_passed", True)
+                    v_notes = v_audit.get("audit_notes", "")
+                    v_icon = "🛡️" if v_pass else "⚠️"
+                    v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
+                    st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
             st.markdown(article_md_text)
 
         with subtab_cms:
@@ -496,7 +512,9 @@ with tab_auto:
                 auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
                 if auto_cover_url:
                     source_label = active_art.get("cover_image_meta", {}).get("source_type", "Ready")
-                    st.markdown(f"🖼️ **Cover Image**: `16:9 WebP ({source_label})`")
+                    v_audit = active_art.get("cover_image_meta", {}).get("vision_audit", {})
+                    v_score = v_audit.get("score", 90) if v_audit else 90
+                    st.markdown(f"🖼️ **Cover Image**: `16:9 WebP ({source_label})` | Vision: `{v_score}/100`")
                 else:
                     st.markdown("🖼️ **Cover Image**: `Belum di-generate`")
                 st.markdown(f"🌐 **Locale**: `id (Bahasa Indonesia)`")

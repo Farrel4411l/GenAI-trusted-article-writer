@@ -20,7 +20,7 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 
 ---
 
-## 3. Arsitektur 6 Tahap (*End-to-End Autonomous Pipeline*)
+## 3. Arsitektur 8 Tahap (*End-to-End Autonomous Pipeline*)
 
 ### Tahap 1: Trend Analyzer & Editorial Planner (`src/automation/trend_hunter.py`)
 - **Sumber Tren**:
@@ -76,18 +76,30 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
   - Menyimpan salinan lokal WebP di `static/covers/` dan mengunggah ke bucket `article-covers` di Supabase Storage.
   - Mengisi field `cover_image_url` dan `cover_image_alt` di skema `public.articles` serta pratinjau di Streamlit UI.
 
+### Tahap 8: Agent Vision Reviewer & Visual Quality Loop (`src/automation/vision_reviewer.py`)
+- **Peran & Fungsi**: Bertindak sebagai *Senior Photography Editor & Visual Fact-Checker* menggunakan Multimodal Vision AI (`gemini-3.5-flash`).
+- **Pemeriksaan Ketat 4 Parameter**:
+  1. `has_watermark`: Mendeteksi watermark AI, logo, font melayang, teks stok foto, atau stempel otomatis.
+  2. `is_photorealistic`: Memastikan foto tampak seperti jepretan kamera profesional 35mm (bukan kartun, anime, lukisan digital, render 3D plastik, atau CGI).
+  3. `is_culturally_accurate`: Memvalidasi orisinalitas objek, arsitektur, dan suasana agar sesuai dengan konteks budaya lokal Indonesia.
+  4. `score` & `audit_notes`: Memberikan skor kelayakan terbit (1-100) dan catatan editorial transparan.
+- **Loop Verifikasi & Fallback Otomatis**:
+  - Jika kandidat gambar AI DITOLAK (karena ada watermark atau tampak kartun), sistem secara otomatis melakukan fallback ke foto dokumenter asli berlisensi bebas (Wikimedia Commons) atau melakukan retry dengan seed & prompt ekstra ketat.
+  - Status audit disematkan ke dalam metadata `vision_audit` dan ditampilkan sebagai badge keamanan visual di Streamlit UI.
+
 ---
 
 ## 4. Daftar File yang Dibuat / Diperbarui
 - [x] `implementationplan.md` & `implementation_plan_travelista.md` (Dokumentasi Blueprint)
 - [x] `src/automation/__init__.py`
-- [x] `src/automation/image_hunter.py` (Modul Hybrid Vision-RAG, konversi WebP 16:9, dan upload storage)
+- [x] `src/automation/vision_reviewer.py` (Agent Vision Reviewer untuk inspeksi multimodal, deteksi watermark, dan evaluasi fotorealistis)
+- [x] `src/automation/image_hunter.py` (Modul Hybrid Vision-RAG, anti-watermark prompt, konversi WebP 16:9, dan audit loop)
 - [x] `src/automation/travelista_adapter.py` (Adapter TipTap AST JSON & Nuxt HTML kompatibel Monorepo 2026)
 - [x] `src/automation/storage_supabase.py` (Manajemen tabel `daily_auto_articles` di Supabase)
 - [x] `src/automation/trend_hunter.py` (Pencari tren Google Trends/News ID & perumus Genre/Topik/Judul)
 - [x] `src/automation/model_router.py` (Pemilih otomatis Model Writer & Reviewer berbasis Genre & Kuota)
-- [x] `src/automation/final_checker_agent.py` (Checker ke-2 untuk validasi Judul, Topik, Genre, dan Format CMS)
-- [x] `src/automation/daily_pipeline.py` (Orkestrator otomasi harian End-to-End)
+- [x] `src/automation/final_checker_agent.py` (Checker ke-2 untuk validasi Judul, Topik, Genre, Format CMS, & metadata visual)
+- [x] `src/automation/daily_pipeline.py` (Orkestrator otomasi harian End-to-End dengan notifikasi Vision Reviewer)
 - [x] `run_daily_job.py` (Script CLI eksekutor harian untuk Cron Job pukul 10:00 WIB)
 - [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron 10:00 WIB)
-- [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP dan Payload Monorepo Travelista)
+- [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP, Badge Agent Vision Reviewer, dan Payload Monorepo Travelista)

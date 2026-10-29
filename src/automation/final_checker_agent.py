@@ -270,6 +270,7 @@ DRAF ARTIKEL:
         "verification": {
             "stage1_fact_checker": True,
             "stage2_final_gatekeeper": is_passed,
+            "stage3_vision_reviewer": image_meta.get("vision_audit", {}),
             "compliance_score": audit_data["compliance_score"],
             "audit_summary": checklist_summary,
         },
@@ -290,6 +291,7 @@ DRAF ARTIKEL:
         "cover_image_url": cover_image_url,
         "cover_image_alt": cover_image_alt,
         "cover_image_meta": image_meta,
+        "vision_audit": image_meta.get("vision_audit", {}),
         "cms_payload": cms_payload,
         "travelista_payload": travelista_payload,
         "final_checker_tokens": tokens_used,

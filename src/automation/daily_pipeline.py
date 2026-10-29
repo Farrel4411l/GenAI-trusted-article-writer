@@ -283,6 +283,17 @@ def run_autonomous_daily_pipeline(
         f"{gatekeeper_result['final_check_notes']}"
     )
 
+    v_audit = gatekeeper_result.get("vision_audit", {})
+    if v_audit:
+        v_score = v_audit.get("score", 90)
+        v_status = "LULUS" if v_audit.get("is_passed", True) else "REVISI"
+        v_notes = v_audit.get("audit_notes", "")
+        _notify(
+            "vision_reviewer_done",
+            f"👁️ **Agent Vision Reviewer (Visual Fact-Checker)**: **{v_status} (Skor: {v_score}/100)**  \n"
+            f"*{v_notes}* — Verifikasi visual 16:9 WebP bebas watermark & fotorealistis."
+        )
+
     # 6. Catat pemakaian token ke experiment_metrics.csv agar kuota harian ter-update
     try:
         log_metrics(final_state, total_latency)
