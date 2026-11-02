@@ -1,20 +1,24 @@
-name: Travelista Daily Automated Editorial (10:00 WIB)
+name: Travelista Daily Automated Editorial (09:00 WIB - 4 Artikel Harian Bulan ke-1)
 
 on:
   schedule:
-    # 03:00 UTC = 10:00 WIB (Setiap Hari)
-    - cron: '0 3 * * *'
+    # 02:00 UTC = 09:00 WIB (Setiap Hari secara Otomatis di Cloud)
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       preferred_genre:
-        description: 'Opsional: Pilih Genre spesifik (kosongkan untuk otomatis mengikuti tren)'
+        description: 'Opsional: Pilih 1 Genre spesifik (kosongkan untuk otomatis membuat 4 artikel semua genre)'
         required: false
         default: ''
+      auto_send:
+        description: 'Otomatis kirim ke CMS Travelista? (true/false)'
+        required: false
+        default: 'true'
 
 jobs:
-  generate-daily-article:
+  generate-daily-articles:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout Repository
@@ -31,16 +35,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Autonomous Daily Editorial Pipeline (10:00 WIB)
+      - name: Run Autonomous Daily Editorial Pipeline (4 Artikel / Hari - 09:00 WIB)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TRAVELISTA_CMS_URL: ${{ secrets.TRAVELISTA_CMS_URL }}
+          TRAVELISTA_CMS_API_KEY: ${{ secrets.TRAVELISTA_CMS_API_KEY }}
+          AUTO_SEND_TO_CMS: 'true'
         run: |
+          ARGS=""
           if [ -n "${{ github.event.inputs.preferred_genre }}" ]; then
-            python run_daily_job.py --genre "${{ github.event.inputs.preferred_genre }}"
-          else
-            python run_daily_job.py
+            ARGS="$ARGS --genre \"${{ github.event.inputs.preferred_genre }}\""
           fi
+          if [ "${{ github.event.inputs.auto_send }}" = "false" ]; then
+            ARGS="$ARGS --no-send"
+          fi
+          python run_daily_job.py $ARGS

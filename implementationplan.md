@@ -63,9 +63,23 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - Membuat dan mengelola tabel `daily_auto_articles` di Supabase PostgreSQL tanpa menyentuh tabel vektor `langchain_pg_embedding`.
 - Menyimpan seluruh hasil artikel harian, metadata tren, alasan pemilihan model, status Checker 1 & Checker 2, serta payload JSON CMS.
 
-### Tahap 6: Penjadwalan Cron Job 10:00 WIB (`.github/workflows/daily_editorial.yml` & `run_daily_job.py`)
-- Menggunakan GitHub Actions dengan jadwal `cron: '0 3 * * *'` (03:00 UTC = **10:00 WIB** setiap hari).
-- Menjalankan `python run_daily_job.py` secara otomatis di cloud dan menyimpan hasilnya ke Supabase sehingga tim redaksi tinggal menyalin (*copy-paste*) artikel yang sudah matang di Streamlit UI.
+### Tahap 6: Penjadwalan Cron Job 10:00 WIB & Auto-Dispatch ke CMS Travelista (`.github/workflows/daily_editorial.yml`, `run_daily_job.py`, `src/automation/travelista_sender.py`)
+- **Strategi Volume Penerbitan Bertahap (SEO Golden Ratio)**:
+  - **Bulan ke-1 (Fase Kalibrasi & Validasi Redaksi)**: Memproduksi **4 artikel harian (1 artikel per genre resmi Travelista)** setiap pukul 10:00 WIB secara berurutan (*batch mode*). Artikel dikirim ke CMS Travelista dengan status `review` agar editor dapat meninjau dan mendistribusikannya secara terjadwal.
+  - **Bulan ke-2 ke Depan (Fase Scale-Up Google Discover)**: Ditingkatkan menjadi **8 artikel harian (2 artikel per genre resmi)** dengan dua edisi penayangan: Edisi Pagi (09:00 WIB) dan Edisi Sore (16:30 WIB) untuk memicu Google Discover harian.
+- **Eksekusi 100% Cloud Autonomous (Hands-Free)**:
+  - Menggunakan GitHub Actions dengan jadwal `cron: '0 3 * * *'` (03:00 UTC = **10:00 WIB** setiap hari secara otomatis).
+  - Server GitHub bangun secara mandiri tanpa memerlukan perangkat lokal menyala ataupun intervensi manual dari redaktur/programmer.
+  - Menjalankan `python run_daily_job.py --auto-send` yang langsung memicu:
+    1. Riset tren harian & sintesis artikel multi-dokumen RAG.
+    2. Fact-checking kredibilitas sumber (Checker 1) & validasi format struktural (Checker 2).
+    3. Akuisisi & audit foto sampul 16:9 WebP bebas watermark oleh Agent Vision Reviewer.
+    4. Penyimpanan riwayat ke database Supabase (`daily_auto_articles`).
+    5. **Auto-Dispatch HTTP POST**: Mengirimkan payload artikel lengkap secara otomatis via modul `travelista_sender.py` ke endpoint CMS Travelista (`/api/articles/receive`).
+- **Mode Kontrol Fleksibel**:
+  - `python run_daily_job.py` (Default: Auto-generate & Auto-send).
+  - `python run_daily_job.py --no-send` (Mode riset lokal/dry run: simpan ke DB tanpa kirim ke CMS).
+  - Workflow Dispatch via GitHub UI dengan input opsional: pilihan genre dan flag `auto_send`.
 
 ### Tahap 7: Automated 16:9 WebP Cover Image Pipeline (`src/automation/image_hunter.py`)
 - **Standar Format Travelista 2026**: Rasio aspek **16:9 landscape** (`1200 x 675` px), format kompresi **WebP (< 400 KB)** untuk LCP performa tinggi, serta SEO `cover_image_alt`.
@@ -87,11 +101,19 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
   - Jika kandidat gambar AI DITOLAK (karena ada watermark atau tampak kartun), sistem secara otomatis melakukan fallback ke foto dokumenter asli berlisensi bebas (Wikimedia Commons) atau melakukan retry dengan seed & prompt ekstra ketat.
   - Status audit disematkan ke dalam metadata `vision_audit` dan ditampilkan sebagai badge keamanan visual di Streamlit UI.
 
+### Tahap 9: Hands-Free Monitoring & Editorial Dashboard Tracking
+- **Zero Manual Writing**: Redaksi dan programmer tidak perlu menulis teks atau menekan tombol pengiriman.
+- **Titik Pantau Terpusat**:
+  1. **CMS Travelista (`/dashboard/articles`)**: Artikel otomatis masuk ke antrean **Review** dengan seluruh metadata, kategori, tags, foto sampul, dan TipTap AST siap pakai.
+  2. **CMS Laporan (`/dashboard/report`)**: Memantau statistik performa tayang, agregasi views, dan tren kategori.
+  3. **Streamlit UI (`app.py`)**: Berfungsi sebagai monitor diagnostik AI (metrik kuota token, evaluasi skor fact-checker, audit foto, dan log pengiriman).
+
 ---
 
 ## 4. Daftar File yang Dibuat / Diperbarui
-- [x] `implementationplan.md` & `implementation_plan_travelista.md` (Dokumentasi Blueprint)
+- [x] `implementationplan.md` & `implementation_plan_travelista.md` (Dokumentasi Blueprint Otomasi Harian & Webhook)
 - [x] `src/automation/__init__.py`
+- [x] `src/automation/travelista_sender.py` (Klien HTTP POST Webhook ke CMS Travelista `/api/articles/receive`)
 - [x] `src/automation/vision_reviewer.py` (Agent Vision Reviewer untuk inspeksi multimodal, deteksi watermark, dan evaluasi fotorealistis)
 - [x] `src/automation/image_hunter.py` (Modul Hybrid Vision-RAG, anti-watermark prompt, konversi WebP 16:9, dan audit loop)
 - [x] `src/automation/travelista_adapter.py` (Adapter TipTap AST JSON & Nuxt HTML kompatibel Monorepo 2026)
@@ -100,6 +122,18 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - [x] `src/automation/model_router.py` (Pemilih otomatis Model Writer & Reviewer berbasis Genre & Kuota)
 - [x] `src/automation/final_checker_agent.py` (Checker ke-2 untuk validasi Judul, Topik, Genre, Format CMS, & metadata visual)
 - [x] `src/automation/daily_pipeline.py` (Orkestrator otomasi harian End-to-End dengan notifikasi Vision Reviewer)
-- [x] `run_daily_job.py` (Script CLI eksekutor harian untuk Cron Job pukul 10:00 WIB)
-- [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron 10:00 WIB)
-- [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP, Badge Agent Vision Reviewer, dan Payload Monorepo Travelista)
+- [x] `run_daily_job.py` (Script CLI eksekutor harian dengan dukungan `--auto-send` & `--no-send` untuk Cron 10:00 WIB)
+- [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron Cloud Otomatis 10:00 WIB & Secret Envs)
+- [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP, Badge Vision Reviewer, dan Tombol Dispatch CMS)
+
+---
+
+## 5. Konfigurasi GitHub Repository Secrets (Untuk Eksekusi Cloud 100% Mandiri)
+Agar GitHub Actions dapat berjalan otomatis di cloud tanpa dependensi lokal, daftarkan secrets berikut di repositori GitHub (**Settings > Secrets and variables > Actions > New repository secret**):
+- `DATABASE_URL`: URL PostgreSQL / Supabase untuk cache riwayat tren & deduplikasi topik.
+- `GEMINI_API_KEY`: API Key Google Gemini (untuk Writer/Reviewer & Multimodal Vision Reviewer).
+- `GROQ_API_KEY`: API Key Groq (untuk Model Router & Cross-Model Fact-Checker).
+- `COHERE_API_KEY`: API Key Cohere (untuk artikel Sejarah & Misteri).
+- `OPENROUTER_API_KEY`: (Opsional) Fallback provider model.
+- `TRAVELISTA_CMS_URL`: URL publik CMS Travelista (misal: `https://travelista-2026-cms.vercel.app` atau domain produksi).
+- `TRAVELISTA_CMS_API_KEY`: Secret Key yang cocok dengan `AUTO_ARTICLE_SECRET_KEY` di server CMS.

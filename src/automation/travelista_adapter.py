@@ -272,7 +272,7 @@ def build_travelista_ready_payload(
         "articles_record": article_db_record,
         "references": references,
         "notes": {
-            "cover_image_reminder": "Riset cover image ditahan sementara sesuai arahan user.",
+            "cover_image_status": "Ready (16:9 WebP via Image Hunter & Vision Reviewer)",
             "workflow_step": "Siap di-review oleh Editor / Admin di CMS Travelista.",
         }
     }

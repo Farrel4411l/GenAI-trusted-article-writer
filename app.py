@@ -373,17 +373,21 @@ with tab_auto:
         with col_g:
             genre_filter_opt = st.selectbox(
                 "Target Genre Travelista:",
-                options=["🔄 Otomatis (Ikuti Tren Terhangat Hari Ini)"] + TRAVELISTA_GENRES,
+                options=["🔄 Edisi Harian 4 Genre (Rekomendasi Bulan ke-1: 4 Artikel)"] + TRAVELISTA_GENRES,
                 index=0
             )
             selected_pref_genre = None if genre_filter_opt.startswith("🔄") else genre_filter_opt
 
         with col_b1:
             st.write("")
-            btn_preview_trend = st.button("🔍 Intip Tren & Router", use_container_width=True)
+            btn_preview_trend = st.button("🔍 Intip Tren", use_container_width=True)
         with col_b2:
             st.write("")
-            btn_run_auto_now = st.button("🚀 Buat Artikel Otomatis", type="primary", use_container_width=True)
+            btn_run_auto_now = st.button(
+                "🚀 Buat 4 Artikel (Bulan 1)" if selected_pref_genre is None else f"🚀 Buat Artikel {selected_pref_genre[:10]}...",
+                type="primary",
+                use_container_width=True
+            )
 
         if btn_preview_trend:
             with st.spinner("Memindai Google Trends & Google News Indonesia serta menghitung rute model..."):
@@ -415,28 +419,36 @@ with tab_auto:
             )
 
         if btn_run_auto_now:
-            with st.status("🚀 Menjalankan Pipeline Redaksi Otomatis End-to-End...", expanded=True) as auto_status:
-                def _ui_progress(stage: str, message: str):
-                    if stage in ("checker1_pass", "checker2_done", "complete"):
-                        st.success(message)
-                    elif stage == "checker1_revise":
-                        st.warning(message)
-                    else:
-                        st.write(message)
+            target_run_genres = TRAVELISTA_GENRES if selected_pref_genre is None else [selected_pref_genre]
+            with st.status(f"🚀 Menjalankan Pipeline Redaksi Otomatis ({len(target_run_genres)} Artikel)...", expanded=True) as auto_status:
+                created_articles = []
+                for g_idx, g_item in enumerate(target_run_genres, 1):
+                    st.write(f"---\n**[{g_idx}/{len(target_run_genres)}] Memproses Genre:** `{g_item}`...")
+                    def _ui_progress(stage: str, message: str, current_g=g_item):
+                        if stage in ("checker1_pass", "checker2_done", "complete"):
+                            st.success(f"[{current_g}] {message}")
+                        elif stage == "checker1_revise":
+                            st.warning(f"[{current_g}] {message}")
+                        else:
+                            st.write(f"[{current_g}] {message}")
 
-                try:
-                    new_article = run_autonomous_daily_pipeline(
-                        preferred_genre=selected_pref_genre,
-                        progress_callback=_ui_progress
-                    )
-                    st.session_state["latest_auto_article"] = new_article
+                    try:
+                        art = run_autonomous_daily_pipeline(
+                            preferred_genre=g_item,
+                            progress_callback=_ui_progress
+                        )
+                        created_articles.append(art)
+                    except Exception as e:
+                        st.error(f"Gagal pada genre '{g_item}': {e}")
+
+                if created_articles:
+                    st.session_state["latest_auto_article"] = created_articles[-1]
                     auto_status.update(
-                        label=f"✅ Artikel Otomatis Selesai: {new_article.get('final_title', '')}",
+                        label=f"✅ Selesai! Berhasil memproduksi {len(created_articles)} artikel harian.",
                         state="complete",
                         expanded=False
                     )
-                except Exception as e:
-                    st.error(f"Terjadi kendala saat menjalankan otomasi: {e}")
+                else:
                     auto_status.update(label="Proses otomasi terhenti.", state="error")
 
     st.divider()
@@ -594,3 +606,22 @@ with tab_auto:
                 mime="application/json",
                 key=f"dl_json_{active_art.get('id', selected_idx)}"
             )
+
+            st.divider()
+            st.markdown("### 🚀 Integrasi Langsung ke CMS Travelista 2026")
+            send_col1, send_col2 = st.columns([1, 2])
+            with send_col1:
+                if st.button("📤 Kirim ke CMS Travelista", type="primary", key=f"btn_send_cms_{active_art.get('id', selected_idx)}"):
+                    from src.automation.travelista_sender import send_article_to_travelista_cms
+                    with st.spinner("Mengirim artikel ke CMS Travelista (/api/articles/receive)..."):
+                        ok, msg, res = send_article_to_travelista_cms(cms_data)
+                        if ok:
+                            st.success(f"✅ {msg}")
+                            st.balloons()
+                        else:
+                            st.error(f"❌ {msg}")
+            with send_col2:
+                st.caption(
+                    "Artikel akan dikirim ke antrean **Review** CMS Travelista (`http://localhost:3001/dashboard/articles`) secara aman. "
+                    "Tim redaksi dapat memeriksa, mengedit, dan mempublikasikannya kapan pun siap."
+                )
