@@ -33,8 +33,8 @@ def main():
     parser.add_argument(
         "--auto-send",
         action="store_true",
-        default=True,
-        help="Otomatis mengirim artikel yang selesai ke CMS Travelista via Webhook (default: True)."
+        default=False,
+        help="Kirim artikel yang selesai ke CMS Travelista via Webhook (default: False / Mode 1 Sandbox)."
     )
     parser.add_argument(
         "--no-send",
@@ -69,10 +69,9 @@ def main():
     print(f"📋 Target Genre: {', '.join(target_genres)}")
     print("=================================================================")
 
-    should_send = args.auto_send and not args.no_send
-    env_force_no = os.getenv("AUTO_SEND_TO_CMS", "true").lower() in ("false", "0", "no")
-    if env_force_no:
-        should_send = False
+    # Mode 1 Sandbox (Default): Aman 100%, hanya simpan di Supabase & Streamlit pribadi
+    env_send = os.getenv("AUTO_SEND_TO_CMS", "false").lower() in ("true", "1", "yes")
+    should_send = (args.auto_send or env_send) and not args.no_send
 
     target_url = args.cms_url or os.getenv("TRAVELISTA_CMS_URL", "")
     target_key = args.api_key or os.getenv("TRAVELISTA_CMS_API_KEY", "")

@@ -11,9 +11,9 @@ on:
         required: false
         default: ''
       auto_send:
-        description: 'Otomatis kirim ke CMS Travelista? (true/false)'
+        description: 'Kirim ke CMS Travelista? (Mode 1 Sandbox default: false)'
         required: false
-        default: 'true'
+        default: 'false'
 
 jobs:
   generate-daily-articles:
@@ -35,7 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Autonomous Daily Editorial Pipeline (4 Artikel / Hari - 09:00 WIB)
+      - name: Run Autonomous Daily Editorial Pipeline (Mode 1 Sandbox - 4 Artikel / Hari - 09:00 WIB)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -44,13 +44,13 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           TRAVELISTA_CMS_URL: ${{ secrets.TRAVELISTA_CMS_URL }}
           TRAVELISTA_CMS_API_KEY: ${{ secrets.TRAVELISTA_CMS_API_KEY }}
-          AUTO_SEND_TO_CMS: 'true'
+          AUTO_SEND_TO_CMS: 'false'
         run: |
           ARGS=""
           if [ -n "${{ github.event.inputs.preferred_genre }}" ]; then
             ARGS="$ARGS --genre \"${{ github.event.inputs.preferred_genre }}\""
           fi
-          if [ "${{ github.event.inputs.auto_send }}" = "false" ]; then
+          if [ "${{ github.event.inputs.auto_send }}" != "true" ]; then
             ARGS="$ARGS --no-send"
           fi
           python run_daily_job.py $ARGS
