@@ -311,6 +311,9 @@ with tab_manual:
                     v_icon = "🛡️" if v_pass else "⚠️"
                     v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
                     st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
+                disclaimer = saved_state.get("cover_image_meta", {}).get("disclaimer")
+                if disclaimer:
+                    st.caption(f"⚖️ **Disclaimer Visual**: *{disclaimer}*")
             else:
                 if st.button("🖼️ Generate Gambar Sampul (16:9 WebP)", key="btn_gen_manual_cover"):
                     with st.spinner("Membuat gambar sampul 16:9 WebP yang akurat..."):
@@ -534,6 +537,8 @@ with tab_auto:
                     v_icon = "🛡️" if v_pass else "⚠️"
                     v_status = "LULUS (Bebas Watermark & Fotorealistis)" if v_pass else "CATATAN REVISI"
                     st.caption(f"{v_icon} **Agent Vision Reviewer**: Skor: **{v_score}/100** | Status: **{v_status}** — *{v_notes}*")
+                auto_disclaimer = img_meta.get("disclaimer") or ("Foto dokumentasi fotografi otentik via Wikimedia Commons." if "wiki" in str(source_badge).lower() else "Ilustrasi visual editorial AI (16:9 WebP) terverifikasi bebas watermark.")
+                st.caption(f"⚖️ **Disclaimer Visual**: *{auto_disclaimer}*")
             else:
                 st.warning("⚠️ **Cover Image Belum Tersedia**: Artikel ini dibuat sebelum modul Image Hunter aktif.")
                 if st.button("🖼️ Dapatkan Foto Sampul 16:9 WebP Sekarang", key=f"btn_get_cover_{active_art.get('id', selected_idx)}"):
@@ -573,7 +578,8 @@ with tab_auto:
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.markdown(f"🏷️ **Kategori Travelista**: `{cat_info.get('name_id', 'Destinasi')} (ID: {cat_info.get('id', 1)})`")
-                st.markdown(f"👤 **Author**: `{author_info.get('full_name', 'Travelista AI Editorial')}`")
+                author_name = author_info.get("full_name") or os.getenv("TRAVELISTA_AUTHOR_NAME", "Farrel")
+                st.markdown(f"👤 **Author**: `{author_name}`")
             with c2:
                 tag_preview = ", ".join([t.get("name", "") for t in tags_info[:4]])
                 st.markdown(f"🔖 **Tags Terformat**: `{tag_preview or '-'}`")

@@ -63,32 +63,27 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - Membuat dan mengelola tabel `daily_auto_articles` di Supabase PostgreSQL tanpa menyentuh tabel vektor `langchain_pg_embedding`.
 - Menyimpan seluruh hasil artikel harian, metadata tren, alasan pemilihan model, status Checker 1 & Checker 2, serta payload JSON CMS.
 
-### Tahap 6: Penjadwalan Cron Job 10:00 WIB & Auto-Dispatch ke CMS Travelista (`.github/workflows/daily_editorial.yml`, `run_daily_job.py`, `src/automation/travelista_sender.py`)
+### Tahap 6: Penjadwalan Cron Job 09:00 WIB & Alur Pengiriman Terkendali (`.github/workflows/daily_editorial.yml`, `run_daily_job.py`, `src/automation/travelista_sender.py`)
 - **Strategi Volume Penerbitan Bertahap (SEO Golden Ratio)**:
-  - **Bulan ke-1 (Fase Kalibrasi & Validasi Redaksi)**: Memproduksi **4 artikel harian (1 artikel per genre resmi Travelista)** setiap pukul 10:00 WIB secara berurutan (*batch mode*). Artikel dikirim ke CMS Travelista dengan status `review` agar editor dapat meninjau dan mendistribusikannya secara terjadwal.
+  - **Bulan ke-1 (Fase Kalibrasi, Testing, & Validasi Redaksi)**: Memproduksi **4 artikel harian (1 artikel per genre resmi Travelista: Wisata, Kuliner, Sejarah, Budaya)** setiap pukul **09:00 WIB** (02:00 UTC) secara berurutan (*batch mode*).
+  - **Alur Kerja Terkendali (Human-in-the-Loop Validation)**:
+    - **Fase Uji Coba (Mode 1 Sandbox - Default)**: Seluruh 4 artikel disimpan ke database Supabase (`daily_auto_articles`) dan siap ditinjau secara transparan melalui Streamlit UI (`tab_auto`). Redaktur/Farrel memeriksa konsistensi kualitas artikel sebelum dikirim ke CMS produksi.
+    - **Fase Otomatis Penuh (Mode 2 Auto-Dispatch)**: Begitu kualitas artikel dinilai konsisten stabil, flag `AUTO_SEND_TO_CMS='true'` diaktifkan sehingga artikel langsung terkirim otomatis ke endpoint CMS Travelista (`/api/articles/receive`) dengan status `review`.
   - **Bulan ke-2 ke Depan (Fase Scale-Up Google Discover)**: Ditingkatkan menjadi **8 artikel harian (2 artikel per genre resmi)** dengan dua edisi penayangan: Edisi Pagi (09:00 WIB) dan Edisi Sore (16:30 WIB) untuk memicu Google Discover harian.
-- **Eksekusi 100% Cloud Autonomous (Hands-Free)**:
-  - Menggunakan GitHub Actions dengan jadwal `cron: '0 3 * * *'` (03:00 UTC = **10:00 WIB** setiap hari secara otomatis).
-  - Server GitHub bangun secara mandiri tanpa memerlukan perangkat lokal menyala ataupun intervensi manual dari redaktur/programmer.
-  - Menjalankan `python run_daily_job.py --auto-send` yang langsung memicu:
-    1. Riset tren harian & sintesis artikel multi-dokumen RAG.
-    2. Fact-checking kredibilitas sumber (Checker 1) & validasi format struktural (Checker 2).
-    3. Akuisisi & audit foto sampul 16:9 WebP bebas watermark oleh Agent Vision Reviewer.
-    4. Penyimpanan riwayat ke database Supabase (`daily_auto_articles`).
-    5. **Auto-Dispatch HTTP POST**: Mengirimkan payload artikel lengkap secara otomatis via modul `travelista_sender.py` ke endpoint CMS Travelista (`/api/articles/receive`).
-- **Mode Kontrol Fleksibel**:
-  - `python run_daily_job.py` (Default: Auto-generate & Auto-send).
-  - `python run_daily_job.py --no-send` (Mode riset lokal/dry run: simpan ke DB tanpa kirim ke CMS).
-  - Workflow Dispatch via GitHub UI dengan input opsional: pilihan genre dan flag `auto_send`.
+- **Eksekusi 100% Cloud Autonomous (GitHub Actions)**:
+  - Menggunakan GitHub Actions dengan jadwal `cron: '0 2 * * *'` (02:00 UTC = **09:00 WIB** setiap hari secara otomatis).
+  - Menggunakan Repository Secrets yang telah terkonfigurasi di GitHub (`DATABASE_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `COHERE_API_KEY`, `OPENROUTER_API_KEY`).
+  - Menjalankan `python run_daily_job.py` yang memproduksi 4 artikel harian lengkap beserta foto sampul 16:9 WebP.
 
-### Tahap 7: Automated 16:9 WebP Cover Image Pipeline (`src/automation/image_hunter.py`)
+### Tahap 7: Automated 16:9 WebP Cover Image Pipeline & Legal Disclaimer (`src/automation/image_hunter.py`)
 - **Standar Format Travelista 2026**: Rasio aspek **16:9 landscape** (`1200 x 675` px), format kompresi **WebP (< 400 KB)** untuk LCP performa tinggi, serta SEO `cover_image_alt`.
-- **Pendekatan Hybrid (Akurat & Cocok)**:
-  - *Tier 1 (Akurasi Sejarah Nyata)*: Mengambil foto dokumenter berlisensi bebas dari Wikimedia Commons / Wikipedia API untuk cagar budaya & sejarah spesifik (100% akurat tanpa halusinasi visual).
-  - *Tier 2 (AI Generatif Fotorealistis)*: Menggunakan AI Vision Generator (FLUX / SDXL 16:9) dengan prompt fotografi jurnalistik Travelista berdasar konteks fakta RAG (cocok untuk kuliner & wisata alam).
-- **Integrasi Supabase Storage & Payloads**:
-  - Menyimpan salinan lokal WebP di `static/covers/` dan mengunggah ke bucket `article-covers` di Supabase Storage.
-  - Mengisi field `cover_image_url` dan `cover_image_alt` di skema `public.articles` serta pratinjau di Streamlit UI.
+- **Kewajiban Cover Image Selalu Ada (*Mandatory Generation*)**: Setiap artikel wajib memiliki foto sampul visual. Sistem menjamin ketersediaan gambar melalui hierarki: foto dokumenter Wikimedia Commons $\rightarrow$ AI generatif fotorealistis FLUX $\rightarrow$ AI retry $\rightarrow$ fallback editorial placeholder.
+- **Transparansi Disclaimer & Atribusi Hukum**:
+  - Foto dokumenter nyata: *"Foto dokumentasi fotografi otentik via Wikimedia Commons (Lisensi Creative Commons / Public Domain) untuk tujuan informasi edukasi editorial."*
+  - Gambar AI generatif: *"Ilustrasi visual editorial diproduksi dengan bantuan AI Generatif (16:9 WebP) dan telah diverifikasi bebas watermark serta fotorealistis oleh Agent Vision Reviewer."*
+  - Disclaimer disematkan ke dalam metadata artikel dan dirender tepat di bawah gambar di antarmuka majalah.
+- **Atribusi Penulis (Author Assignment)**:
+  - Default author ditetapkan atas nama **Farrel** (`TRAVELISTA_AUTHOR_NAME="Farrel"`), menghubungkan kepemilikan artikel langsung ke profil penulis magang di CMS Travelista.
 
 ### Tahap 8: Agent Vision Reviewer & Visual Quality Loop (`src/automation/vision_reviewer.py`)
 - **Peran & Fungsi**: Bertindak sebagai *Senior Photography Editor & Visual Fact-Checker* menggunakan Multimodal Vision AI (`gemini-3.5-flash`).

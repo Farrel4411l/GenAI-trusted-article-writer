@@ -193,12 +193,12 @@ def markdown_to_tiptap_json(markdown_text: str) -> Dict[str, Any]:
     return {"type": "doc", "content": doc_content}
 
 
-# ── 4. Penulis / Profil Bot AI Default ─────────────────────────────────────────
+# ── 4. Penulis / Profil Penulis Default ─────────────────────────────────────────
 DEFAULT_TRAVELISTA_BOT_AUTHOR = {
     # Default UUID placeholder jika user belum memasukkan UUID profil di .env
     "id": os.getenv("TRAVELISTA_AUTHOR_ID", "00000000-0000-0000-0000-000000000001"),
-    "full_name": "Travelista AI Editorial",
-    "username": "travelista-ai",
+    "full_name": os.getenv("TRAVELISTA_AUTHOR_NAME", "Farrel"),
+    "username": os.getenv("TRAVELISTA_AUTHOR_USERNAME", "farrel"),
     "role": "writer",
 }
 

@@ -354,10 +354,19 @@ def acquire_cover_image(
     public_storage_url = upload_to_supabase_storage(image_bytes, file_name)
     final_cover_url = public_storage_url or original_url
 
+    # Tentukan disclaimer hukum & editorial secara transparan
+    if source_type == "wikimedia_real":
+        disclaimer = "Foto dokumentasi fotografi otentik via Wikimedia Commons (Lisensi Creative Commons / Public Domain) untuk tujuan informasi edukasi editorial."
+    elif source_type == "ai_generative":
+        disclaimer = "Ilustrasi visual editorial diproduksi dengan bantuan AI Generatif (16:9 WebP) dan telah diverifikasi bebas watermark serta fotorealistis oleh Agent Vision Reviewer."
+    else:
+        disclaimer = "Gambar ilustrasi sampul editorial Travelista."
+
     return {
         "cover_image_url": final_cover_url,
         "cover_image_alt": alt_text,
         "source_type": source_type,
+        "disclaimer": disclaimer,
         "original_source_url": original_url,
         "dimensions": "1200x675",
         "aspect_ratio": "16:9",
