@@ -117,8 +117,8 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - [x] `src/automation/model_router.py` (Pemilih otomatis Model Writer & Reviewer berbasis Genre & Kuota)
 - [x] `src/automation/final_checker_agent.py` (Checker ke-2 untuk validasi Judul, Topik, Genre, Format CMS, & metadata visual)
 - [x] `src/automation/daily_pipeline.py` (Orkestrator otomasi harian End-to-End dengan notifikasi Vision Reviewer)
-- [x] `run_daily_job.py` (Script CLI eksekutor harian dengan dukungan `--auto-send` & `--no-send` untuk Cron 10:00 WIB)
-- [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron Cloud Otomatis 10:00 WIB & Secret Envs)
+- [x] `run_daily_job.py` (Script CLI eksekutor harian dengan dukungan `--auto-send` & `--no-send` untuk Cron 09:00 WIB)
+- [x] `.github/workflows/daily_editorial.yml` (Konfigurasi GitHub Actions Cron Cloud Otomatis 09:00 WIB & Secret Envs)
 - [x] `app.py` (Penambahan Pratinjau Cover Image 16:9 WebP, Badge Vision Reviewer, dan Tombol Dispatch CMS)
 
 ---

@@ -134,7 +134,7 @@ with st.expander("📊 Lihat Ringkasan Sisa Token Seluruh Opsi Model (Angka & Pe
 # Pemisahan Mode menggunakan Tab agar Fitur Lama 100% Utuh & Fitur Baru Terisolasi Rapi
 tab_manual, tab_auto = st.tabs([
     "✍️ Studio Redaksi Manual (Eksperimen)",
-    "🤖 Redaksi Otomatis Harian (10:00 WIB)"
+    "🤖 Redaksi Otomatis Harian (09:00 WIB)"
 ])
 
 with tab_manual:
@@ -357,12 +357,12 @@ with tab_manual:
             st.caption("Data metrik ini telah disimpan secara otomatis ke dalam `experiment_metrics.csv`.")
 
 # ==============================================================================
-# TAB 2: REDAKSI OTOMATIS HARIAN (10:00 WIB) — AUTONOMOUS DAILY PIPELINE
+# TAB 2: REDAKSI OTOMATIS HARIAN (09:00 WIB) — AUTONOMOUS DAILY PIPELINE
 # ==============================================================================
 with tab_auto:
-    st.subheader("🤖 Ruang Redaksi Otomatis Harian (Jadwal: 10:00 WIB)")
+    st.subheader("🤖 Ruang Redaksi Otomatis Harian (Jadwal: 09:00 WIB)")
     st.markdown("""
-    Sistem **Auto-Pilot Travelista.id** berjalan otomatis setiap pukul **10:00 WIB** melalui penjadwal cloud dan menyimpan hasilnya langsung ke **Supabase (`daily_auto_articles`)**:
+    Sistem **Auto-Pilot Travelista.id** berjalan otomatis setiap pukul **09:00 WIB** melalui penjadwal cloud dan menyimpan hasilnya langsung ke **Supabase (`daily_auto_articles`)**:
     1. **📈 Trend Analyzer**: Mengecek tren pencarian terkini (Google Trends & Google News ID) pada 4 genre resmi Travelista (*Wisata*, *Kuliner*, *Sejarah & Misteri*, *Budaya & Fakta Unik*), lalu merumuskan Topik & Judul.
     2. **🧠 Smart Model Router**: Memilih model AI *Writer* & *Reviewer* terbaik sesuai karakteristik genre dan sisa kuota token.
     3. **🕵️‍♂️ Dual-Stage Verification**:
@@ -463,7 +463,7 @@ with tab_auto:
         st.info(
             "Belum ada artikel otomatis di tabel Supabase `daily_auto_articles`. "
             "Klik tombol **🚀 Buat Artikel Otomatis** di atas untuk menghasilkan artikel perdana sekarang, "
-            "atau tunggu jadwal otomatis pukul **10:00 WIB**."
+            "atau tunggu jadwal otomatis pukul **09:00 WIB**."
         )
     else:
         article_labels = [
