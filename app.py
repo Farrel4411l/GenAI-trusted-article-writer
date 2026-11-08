@@ -360,9 +360,9 @@ with tab_manual:
 # TAB 2: REDAKSI OTOMATIS HARIAN (09:00 WIB) — AUTONOMOUS DAILY PIPELINE
 # ==============================================================================
 with tab_auto:
-    st.subheader("🤖 Ruang Redaksi Otomatis Harian (Jadwal: 09:00 WIB)")
+    st.subheader("🤖 Ruang Redaksi Otomatis Harian (Bank Naskah H-1: 21:15 WIB ➔ Rilis 09:00 WIB)")
     st.markdown("""
-    Sistem **Auto-Pilot Travelista.id** berjalan otomatis setiap pukul **09:00 WIB** melalui penjadwal cloud dan menyimpan hasilnya langsung ke **Supabase (`daily_auto_articles`)**:
+    Sistem **Auto-Pilot Travelista.id** berjalan otomatis setiap malam pukul **21:15 WIB (H-1)** melalui penjadwal cloud, sehingga **4 artikel harian (1 per genre) 100% siap tayang di meja redaksi tepat pukul 09:00 WIB hari H**:
     1. **📈 Trend Analyzer**: Mengecek tren pencarian terkini (Google Trends & Google News ID) pada 4 genre resmi Travelista (*Wisata*, *Kuliner*, *Sejarah & Misteri*, *Budaya & Fakta Unik*), lalu merumuskan Topik & Judul.
     2. **🧠 Smart Model Router**: Memilih model AI *Writer* & *Reviewer* terbaik sesuai karakteristik genre dan sisa kuota token.
     3. **🕵️‍♂️ Dual-Stage Verification**:
@@ -376,7 +376,7 @@ with tab_auto:
         with col_g:
             genre_filter_opt = st.selectbox(
                 "Target Genre Travelista:",
-                options=["🔄 Edisi Harian 4 Genre (Rekomendasi Bulan ke-1: 4 Artikel)"] + TRAVELISTA_GENRES,
+                options=["🔄 Edisi Harian 4 Genre (Bank Naskah H-1: 4 Artikel)"] + TRAVELISTA_GENRES,
                 index=0
             )
             selected_pref_genre = None if genre_filter_opt.startswith("🔄") else genre_filter_opt

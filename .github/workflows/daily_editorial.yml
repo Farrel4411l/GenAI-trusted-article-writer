@@ -1,9 +1,11 @@
-name: Travelista Daily Automated Editorial (09:00 WIB - 4 Artikel Harian Bulan ke-1)
+name: Travelista Daily Automated Editorial (21:15 WIB H-1 untuk Tayang 09:00 WIB - 4 Artikel Harian Bulan ke-1)
 
 on:
   schedule:
-    # 02:00 UTC = 09:00 WIB (Setiap Hari secara Otomatis di Cloud)
-    - cron: '0 2 * * *'
+    # 14:15 UTC = 21:15 WIB (Setiap Malam H-1 secara Otomatis di Cloud)
+    # Menghindari antrean padat jam bulat (:00).
+    # Naskah selesai malam hari agar 100% siap tayang di meja redaksi pukul 09:00 WIB hari H.
+    - cron: '15 14 * * *'
   workflow_dispatch:
     inputs:
       preferred_genre:
@@ -18,7 +20,7 @@ on:
 jobs:
   generate-daily-articles:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
 
     steps:
       - name: Checkout Repository
@@ -35,7 +37,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Autonomous Daily Editorial Pipeline (Mode 1 Sandbox - 4 Artikel / Hari - 09:00 WIB)
+      - name: Run Autonomous Daily Editorial Pipeline (Bank Naskah H-1: 21:15 WIB - 4 Artikel / Hari)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

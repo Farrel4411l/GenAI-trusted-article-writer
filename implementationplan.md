@@ -63,17 +63,32 @@ Sistem pencarian tren dan penulisan otomatis dibatasi secara ketat pada 4 genre 
 - Membuat dan mengelola tabel `daily_auto_articles` di Supabase PostgreSQL tanpa menyentuh tabel vektor `langchain_pg_embedding`.
 - Menyimpan seluruh hasil artikel harian, metadata tren, alasan pemilihan model, status Checker 1 & Checker 2, serta payload JSON CMS.
 
-### Tahap 6: Penjadwalan Cron Job 09:00 WIB & Alur Pengiriman Terkendali (`.github/workflows/daily_editorial.yml`, `run_daily_job.py`, `src/automation/travelista_sender.py`)
-- **Strategi Volume Penerbitan Bertahap (SEO Golden Ratio)**:
-  - **Bulan ke-1 (Fase Kalibrasi, Testing, & Validasi Redaksi)**: Memproduksi **4 artikel harian (1 artikel per genre resmi Travelista: Wisata, Kuliner, Sejarah, Budaya)** setiap pukul **09:00 WIB** (02:00 UTC) secara berurutan (*batch mode*).
-  - **Alur Kerja Terkendali (Human-in-the-Loop Validation)**:
-    - **Fase Uji Coba (Mode 1 Sandbox - Default)**: Seluruh 4 artikel disimpan ke database Supabase (`daily_auto_articles`) dan siap ditinjau secara transparan melalui Streamlit UI (`tab_auto`). Redaktur/Farrel memeriksa konsistensi kualitas artikel sebelum dikirim ke CMS produksi.
-    - **Fase Otomatis Penuh (Mode 2 Auto-Dispatch)**: Begitu kualitas artikel dinilai konsisten stabil, flag `AUTO_SEND_TO_CMS='true'` diaktifkan sehingga artikel langsung terkirim otomatis ke endpoint CMS Travelista (`/api/articles/receive`) dengan status `review`.
-  - **Bulan ke-2 ke Depan (Fase Scale-Up Google Discover)**: Ditingkatkan menjadi **8 artikel harian (2 artikel per genre resmi)** dengan dua edisi penayangan: Edisi Pagi (09:00 WIB) dan Edisi Sore (16:30 WIB) untuk memicu Google Discover harian.
-- **Eksekusi 100% Cloud Autonomous (GitHub Actions)**:
-  - Menggunakan GitHub Actions dengan jadwal `cron: '0 2 * * *'` (02:00 UTC = **09:00 WIB** setiap hari secara otomatis).
-  - Menggunakan Repository Secrets yang telah terkonfigurasi di GitHub (`DATABASE_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `COHERE_API_KEY`, `OPENROUTER_API_KEY`).
-  - Menjalankan `python run_daily_job.py` yang memproduksi 4 artikel harian lengkap beserta foto sampul 16:9 WebP.
+### Tahap 6: Penjadwalan Bank Naskah H-1 (21:15 WIB) & Sistem Anti-Gagal 4-Artikel (`.github/workflows/daily_editorial.yml`, `run_daily_job.py`, `src/automation/travelista_sender.py`)
+
+#### A. Rasionalisasi Strategis: Mengapa Bank Naskah H-1 (Pukul 21:15 WIB)?
+Dalam sistem redaksi media digital profesional (seperti Detik, Kompas, dan IDN Times), proses produksi konten selalu dipersiapkan **satu malam sebelumnya (*Evening Staging / Bank Naskah H-1*)** dan tidak pernah diproduksi mendadak di pagi hari jam tayang.
+1. **Disiplin Jadwal Redaksi (09:00 WIB Siap 100%)**:
+   - Jika artikel diproduksi pada malam hari (pukul **21:15 WIB / 14:15 UTC**), proses riset AI, penulisan naskah, fact-checking, dan audit cover foto selesai sebelum tengah malam.
+   - Saat tim redaksi masuk kerja pukul 08:30 WIB keesokan paginya, seluruh 4 artikel harian telah tersimpan rapi di dashboard dengan status `Review`.
+   - Tepat pukul **09:00 WIB**, tim redaksi benar-benar **hanya perlu meninjau dan langsung menekan tombol Publish** tanpa risiko keterlambatan server.
+2. **Eliminasi Delay Queue GitHub Actions (Menghindari Menit `:00`)**:
+   - Server GitHub Actions gratis mengalami penumpukan antrean ribuan repositori di menit bulat `:00` (seperti `02:00 UTC` / 09:00 WIB) yang menyebabkan *delay* eksekusi hingga beberapa jam.
+   - Dengan memindahkan jadwal ke **14:15 UTC (21:15 WIB)** menggunakan menit acak `:15`, server cloud GitHub langsung mengeksekusi pipeline tanpa hambatan antrean.
+3. **Relevansi Google Trends Tetap 100% Akurat**:
+   - 4 genre resmi Travelista (*Wisata*, *Kuliner*, *Sejarah*, *Budaya*) adalah konten **Lifestyle, Edukasi, dan Perjalanan**, BUKAN *breaking news* kilat yang basi dalam hitungan jam.
+   - Siklus hidup tren (*trend shelf-life*) topik wisata dan kuliner bertahan berhari-hari hingga berminggu-minggu.
+   - Tren yang ditarik pukul 21:00 malam merefleksikan akumulasi minat pencarian masyarakat Indonesia sepanjang hari, sehingga saat terbit keesokan paginya pukul 09:00 WIB (~11 jam kemudian), konten tersebut mendarat tepat pada siklus baca pagi audiens.
+
+#### B. Arsitektur Anti-Gagal 4-Artikel Harian (100% Reliability Guarantee)
+Untuk menjamin agar kuota 4 artikel harian selalu tercapai genap dan tidak ada genre yang tertinggal (mencegah insiden seperti kegagalan parsial 3 artikel), sistem menerapkan 4 lapis proteksi:
+1. **Cooldown Jeda 15 Detik Antar-Genre**:
+   Memberikan jeda istirahat 15 detik setelah setiap genre selesai diproduksi guna mencegah terbentur batasan *Rate Limit* (Requests-Per-Minute / RPM) pada kuota API Gemini dan Groq.
+2. **Smart Retry Loop (3x Percobaan dengan Exponential Backoff)**:
+   Setiap genre memiliki toleransi retry otomatis hingga 3 kali percobaan dengan jeda bertingkat (10 detik, 20 detik, 30 detik). Jika percobaan pertama terkena kendala jaringan atau batas kuota sesaat, sistem otomatis menunggu dan mencoba kembali tanpa menggugurkan proses.
+3. **Fallback Topic Reservoir (`CURATED_EVERGREEN_POOL`)**:
+   Jika pencarian kueri Google News atau server Wikimedia mengalami gangguan koneksi, sistem secara adaptif mengambil topik cadangan terverifikasi dari repositori budaya/wisata Nusantara yang kaya fakta di Wikipedia ID.
+4. **Sweep Recovery Pass**:
+   Di akhir perulangan utama, sistem memeriksa apakah ada genre yang belum selesai (`len(results) < 4`). Jika ada, sistem mengeksekusi putaran pemulihan khusus (*sweep pass*) untuk menuntaskan genre yang tertinggal hingga kuota 4 artikel terpenuhi sempurna.
 
 ### Tahap 7: Automated 16:9 WebP Cover Image Pipeline & Legal Disclaimer (`src/automation/image_hunter.py`)
 - **Standar Format Travelista 2026**: Rasio aspek **16:9 landscape** (`1200 x 675` px), format kompresi **WebP (< 400 KB)** untuk LCP performa tinggi, serta SEO `cover_image_alt`.
