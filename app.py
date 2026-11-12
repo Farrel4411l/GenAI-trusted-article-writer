@@ -20,6 +20,8 @@ from src.automation.trend_hunter import TRAVELISTA_GENRES, analyze_and_select_da
 from src.automation.model_router import select_optimal_models
 from src.automation.daily_pipeline import run_autonomous_daily_pipeline
 from src.automation.storage_supabase import get_daily_articles, get_recent_topics
+from src.automation.healthcheck import check_github_actions_health, evaluate_system_health
+from src.automation.docx_exporter import export_article_to_docx, export_bulk_articles_to_docx
 
 # Load environment variables
 load_dotenv()
@@ -455,9 +457,64 @@ with tab_auto:
                     auto_status.update(label="Proses otomasi terhenti.", state="error")
 
     st.divider()
-    st.markdown("### 📰 Daftar Artikel Harian Siap Copas (Tersimpan di Supabase)")
 
     saved_articles = get_daily_articles(limit=20)
+
+    # ── 🛡️ Healthcheck & Early Warning System ────────────────────────
+    gh_health_info = check_github_actions_health(timeout=4)
+    health_eval = evaluate_system_health(saved_articles, gh_health_info)
+
+    health_level = health_eval["level"]
+    badge_label = health_eval["badge"]
+
+    with st.container(border=True):
+        h_col1, h_col2 = st.columns([3, 1])
+        with h_col1:
+            st.markdown(f"#### 🛡️ Status Otomasi Redaksi: **{badge_label}**")
+            st.caption(
+                f"📅 Evaluasi Terakhir: `{health_eval['evaluated_at']}` | "
+                f"Jadwal Rutin: **Malam ini 21:15 WIB (Bank Naskah H-1)**"
+            )
+        with h_col2:
+            if st.button("🔄 Segarkan Status", key="btn_refresh_health", use_container_width=True):
+                st.rerun()
+
+        # Metric Summary Cards
+        c_h1, c_h2, c_h3 = st.columns(3)
+        c_h1.metric(
+            "⚙️ Runner GitHub Actions",
+            "AKTIF" if gh_health_info.get("workflow_state") == "active" else "OFFLINE",
+            delta="Normal" if gh_health_info.get("last_run_conclusion") != "failure" else "Terakhir Gagal",
+            delta_color="normal" if gh_health_info.get("last_run_conclusion") != "failure" else "inverse"
+        )
+        c_h2.metric(
+            "📦 Naskah Tanggal Terakhir",
+            f"{health_eval['latest_batch_count']}/4 Genre",
+            delta="Lengkap" if health_eval["latest_batch_count"] >= 4 else f"Kurang {4 - health_eval['latest_batch_count']}",
+            delta_color="normal" if health_eval["latest_batch_count"] >= 4 else "inverse"
+        )
+        c_h3.metric(
+            "⏱️ Run Terakhir",
+            gh_health_info.get("last_run_date_wib", "-")
+        )
+
+        # Kotak Peringatan Khusus jika terjadi Anomali / Error
+        if health_eval["alerts"]:
+            if health_level == "critical":
+                st.error(
+                    "🚨 **PERINGATAN DINI REDAKSI (EARLY WARNING):**\n" +
+                    "\n".join([f"- {msg}" for msg in health_eval["alerts"]])
+                )
+            else:
+                st.warning(
+                    "⚠️ **CATATAN SISTEM (WARNING):**\n" +
+                    "\n".join([f"- {msg}" for msg in health_eval["alerts"]])
+                )
+            st.caption(
+                "💡 *Jika jadwal terlewat atau runner cloud mengalami gangguan, Anda dapat memicu pembuatan ulang 4 artikel secara mandiri dengan tombol **Buat 4 Artikel (Bulan 1)** di bagian atas.*"
+            )
+
+    st.markdown("### 📰 Daftar Artikel Harian Siap Copas (Tersimpan di Supabase)")
 
     if not saved_articles:
         st.info(
@@ -514,13 +571,48 @@ with tab_auto:
         with subtab_copy:
             st.caption("💡 Klik ikon **Copy (📋)** di pojok kanan atas kotak di bawah ini untuk menyalin seluruh artikel secara utuh:")
             st.code(article_md_text, language="markdown")
-            st.download_button(
-                label="📥 Unduh File Artikel (.md)",
-                data=article_md_text.encode("utf-8"),
-                file_name=f"{slug_name}.md",
-                mime="text/markdown",
-                key=f"dl_md_{active_art.get('id', selected_idx)}"
-            )
+
+            st.markdown("##### 📥 Unduh Naskah Redaksi")
+            dl_c1, dl_c2 = st.columns(2)
+            with dl_c1:
+                docx_file = export_article_to_docx(active_art)
+                st.download_button(
+                    label="📄 Unduh Word (.docx) Format Resmi",
+                    data=docx_file,
+                    file_name=f"{slug_name}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key=f"dl_docx_{active_art.get('id', selected_idx)}",
+                    use_container_width=True
+                )
+            with dl_c2:
+                st.download_button(
+                    label="📝 Unduh Markdown (.md)",
+                    data=article_md_text.encode("utf-8"),
+                    file_name=f"{slug_name}.md",
+                    mime="text/markdown",
+                    key=f"dl_md_{active_art.get('id', selected_idx)}",
+                    use_container_width=True
+                )
+
+            # Opsi Bulk Download untuk Naskah di Tanggal yang Sama
+            active_date = active_art.get("run_date")
+            same_day_arts = [a for a in saved_articles if a.get("run_date") == active_date]
+            if len(same_day_arts) > 1:
+                st.markdown("---")
+                b_c1, b_c2 = st.columns([3, 2])
+                with b_c1:
+                    st.markdown(f"**📚 Bundel Edisi Lengkap ({active_date})**")
+                    st.caption(f"Tersedia {len(same_day_arts)} naskah pada edisi ini. Unduh semua naskah sekaligus dalam 1 dokumen Word (.docx) rapi untuk arsip redaksi / lampiran laporan magang.")
+                with b_c2:
+                    bulk_docx = export_bulk_articles_to_docx(same_day_arts, title_batch=f"Edisi Harian Travelista - {active_date}")
+                    st.download_button(
+                        label=f"📦 Unduh 1 Bundel ({len(same_day_arts)} Naskah .docx)",
+                        data=bulk_docx,
+                        file_name=f"Kompilasi_Travelista_{active_date}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key=f"dl_bulk_docx_{active_date}",
+                        use_container_width=True
+                    )
 
         with subtab_preview:
             auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")

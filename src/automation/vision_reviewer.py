@@ -37,6 +37,11 @@ def audit_image_with_vision(
         "audit_notes": f"Lolos verifikasi heuristik format ({source_type}).",
     }
 
+    from src.automation.model_router import is_gemini_quota_exhausted
+    if is_gemini_quota_exhausted():
+        print("[Vision Reviewer] Kuota Gemini terdeteksi habis. Menggunakan validasi heuristik format bawaan.")
+        return default_result
+
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         print("[Vision Reviewer] GEMINI_API_KEY tidak ditemukan. Melewati inspeksi visual mendalam.")
@@ -55,7 +60,8 @@ def audit_image_with_vision(
         llm = ChatGoogleGenerativeAI(
             model="gemini-3.5-flash",
             api_key=api_key,
-            temperature=0.0
+            temperature=0.0,
+            timeout=30
         )
 
         audit_prompt = f"""Anda adalah Senior Photography Editor & Visual Fact-Checker (Agent Vision Reviewer) di portal 'Travelista.id'.

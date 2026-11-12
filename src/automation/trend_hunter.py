@@ -173,8 +173,11 @@ def collect_live_trends(preferred_genre: Optional[str] = None) -> List[Dict[str,
 def analyze_and_select_daily_topic(
     recent_topics: Optional[List[str]] = None,
     preferred_genre: Optional[str] = None,
-    planner_model_id: str = "gemini/gemini-3.5-flash"
+    planner_model_id: Optional[str] = None
 ) -> Dict[str, Any]:
+    from src.automation.model_router import is_gemini_quota_exhausted
+    if not planner_model_id:
+        planner_model_id = "groq/openai/gpt-oss-120b" if is_gemini_quota_exhausted() else "gemini/gemini-3.5-flash"
     """
     Menganalisis sinyal tren pencarian hari ini dan menentukan:
     1. Genre Terbaik (dari 4 genre Travelista)

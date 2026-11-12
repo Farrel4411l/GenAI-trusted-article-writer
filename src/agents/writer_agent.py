@@ -84,6 +84,7 @@ def writer_node(state: AgentState):
         HumanMessage(content=user_content)
     ]
     
+    response = None
     max_attempts = 3
     for attempt in range(max_attempts):
         try:
@@ -92,14 +93,25 @@ def writer_node(state: AgentState):
         except Exception as e:
             err_str = str(e).lower()
             if "429" in str(e) or "resource_exhausted" in err_str or "rate limit" in err_str or "otpm" in err_str:
-                if attempt < max_attempts - 1:
-                    # Turunkan max_tokens jika model mendukung untuk meringankan beban OTPM
-                    if hasattr(model, "max_tokens") and model.max_tokens:
-                        model.max_tokens = max(600, model.max_tokens - 100)
-                    print(f"Batas kecepatan API (429/OTPM) tercapai. Menunggu 60 detik agar sliding window 1 menit pulih... (Percobaan {attempt+1}/{max_attempts})")
-                    time.sleep(60)
-                else:
-                    raise e
+                # Jika batas harian habis (per day / quota), jangan tunggu 60s, langsung failover ke Groq!
+                if "per day" in err_str or "free_tier_requests" in err_str or "generativelanguage" in err_str or attempt >= 1:
+                    print(f"⚠️ Batas kecepatan/kuota writer tercapai ({e}). Mengaktifkan Dynamic Failover ke Groq Cloud...")
+                    try:
+                        fallback_model = get_llm("groq/openai/gpt-oss-120b" if "gpt" not in writer_model_name else "groq/qwen/qwen3.8-27b")
+                        response = fallback_model.invoke(messages)
+                        writer_model_name = "groq/openai/gpt-oss-120b" if "gpt" not in writer_model_name else "groq/qwen/qwen3.8-27b"
+                        break
+                    except Exception as e_fb:
+                        print(f"⚠️ Fallback pertama gagal ({e_fb}), mencoba Groq Qwen 27B...")
+                        fallback_model2 = get_llm("groq/qwen/qwen3.8-27b")
+                        response = fallback_model2.invoke(messages)
+                        writer_model_name = "groq/qwen/qwen3.8-27b"
+                        break
+
+                if hasattr(model, "max_tokens") and model.max_tokens:
+                    model.max_tokens = max(600, model.max_tokens - 100)
+                print(f"Batas kecepatan API (429/OTPM) tercapai. Menunggu 15 detik... (Percobaan {attempt+1}/{max_attempts})")
+                time.sleep(15)
             else:
                 raise e
                 

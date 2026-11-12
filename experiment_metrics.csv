@@ -6,3 +6,10 @@ Timestamp,Topic,Writer Model,Reviewer Model,Revisions,Passed,Writer Tokens,Revie
 2026-10-14 12:01:47,aceh,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,1,True,4587,5785,436,38.76
 2026-10-28 09:49:24,Dataran Tinggi Dieng dan Candi Dieng,groq/openai/gpt-oss-120b,gemini/gemini-3.5-flash,1,True,889,834,718,85.75
 2026-10-28 09:52:43,Situs Batujaya dan Kabupaten Karawang,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,1,True,7094,5253,1207,94.48
+2026-11-08 22:45:50,Es Pisang Ijo dan Kota Makassar,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,2,True,11321,10248,1384,160.23
+2026-11-13 00:02:22,Desa Wisata Nglanggeran dan Kabupaten Gunungkidul,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,1,True,7396,5389,1380,123.48
+2026-11-13 00:06:37,Lontong Sayur dan Kota Jakarta,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,3,True,21371,16537,1496,239.41
+2026-11-13 00:31:22,Candi Muara Takus dan Kabupaten Kampar,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,3,False,5743,5951,1935,114.59
+2026-11-13 00:32:43,Situs Gunung Padang dan Kabupaten Cianjur,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,3,False,8017,9385,0,394.09
+2026-11-13 00:33:01,Candi Borobudur dan Wangsa Syailendra,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,3,False,13013,14591,2242,351.41
+2026-11-13 00:34:56,Kebudayaan Dayak dan Kalimantan Tengah,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,3,False,13776,13457,2031,166.39

@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from src.utils.token_tracker import get_model_usage_stats, MODEL_QUOTAS
@@ -14,15 +15,16 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
     "Wisata & Destinasi (Travel)": {
         "writer": [
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
+            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "cohere/command-a-plus-05-2026",
+            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Wisata & Destinasi membutuhkan narasi panjang 5-8 paragraf yang utuh tanpa "
@@ -33,15 +35,16 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
     "Kuliner Nusantara": {
         "writer": [
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
+            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "cohere/command-a-plus-05-2026",
+            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Kuliner Nusantara menuntut deskripsi mendalam 5-8 paragraf beserta sitasi lengkap "
@@ -51,15 +54,16 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
     "Sejarah & Misteri Lokal": {
         "writer": [
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
+            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "cohere/command-a-plus-05-2026",
+            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Sejarah & Misteri Lokal padat akan angka tahun, nama tokoh, dan kronologi "
@@ -70,15 +74,16 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
     "Budaya & Fakta Unik": {
         "writer": [
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
+            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "cohere/command-a-plus-05-2026",
+            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Budaya & Fakta Unik memerlukan sintesis lintas-sumber yang presisi "
@@ -86,6 +91,29 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
         ),
     },
 }
+
+_GEMINI_EXHAUSTED = False
+
+def is_gemini_quota_exhausted() -> bool:
+    global _GEMINI_EXHAUSTED
+    if _GEMINI_EXHAUSTED:
+        return True
+    if os.getenv("GEMINI_EXHAUSTED", "false").lower() in ("true", "1", "yes"):
+        return True
+    flag_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "gemini_exhausted.flag")
+    if os.path.exists(flag_path) or os.path.exists("gemini_exhausted.flag"):
+        return True
+    return False
+
+def mark_gemini_exhausted():
+    global _GEMINI_EXHAUSTED
+    _GEMINI_EXHAUSTED = True
+    os.environ["GEMINI_EXHAUSTED"] = "true"
+    try:
+        with open("gemini_exhausted.flag", "w") as f:
+            f.write(str(time.time()))
+    except Exception:
+        pass
 
 MIN_SAFE_REMAINING_TOKENS = 15_000
 
@@ -105,6 +133,8 @@ def _is_provider_key_available(model_id: str) -> bool:
 
 def _has_sufficient_quota(model_id: str, stats: Dict[str, Dict[str, Any]]) -> bool:
     """Mengecek apakah sisa kuota token model masih di atas batas aman."""
+    if model_id.startswith("gemini/") and is_gemini_quota_exhausted():
+        return False
     info = stats.get(model_id)
     if not info:
         return True
