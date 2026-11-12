@@ -481,11 +481,23 @@ with tab_auto:
 
         # Metric Summary Cards
         c_h1, c_h2, c_h3 = st.columns(3)
+        gh_st = gh_health_info.get("last_run_status")
+        gh_conc = gh_health_info.get("last_run_conclusion")
+        if gh_st == "in_progress":
+            runner_delta = "Sedang Berjalan"
+            runner_color = "normal"
+        elif gh_conc == "failure":
+            runner_delta = "Terakhir Gagal"
+            runner_color = "inverse"
+        else:
+            runner_delta = "Normal"
+            runner_color = "normal"
+
         c_h1.metric(
             "⚙️ Runner GitHub Actions",
             "AKTIF" if gh_health_info.get("workflow_state") == "active" else "OFFLINE",
-            delta="Normal" if gh_health_info.get("last_run_conclusion") != "failure" else "Terakhir Gagal",
-            delta_color="normal" if gh_health_info.get("last_run_conclusion") != "failure" else "inverse"
+            delta=runner_delta,
+            delta_color=runner_color
         )
         c_h2.metric(
             "📦 Naskah Tanggal Terakhir",

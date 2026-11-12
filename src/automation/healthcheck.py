@@ -24,6 +24,7 @@ def check_github_actions_health(timeout: int = 5) -> Dict[str, Any]:
         "workflow_name": "Travelista Daily Automated Editorial",
         "last_run_id": None,
         "last_run_event": None,
+        "last_run_status": "unknown",
         "last_run_conclusion": "unknown",
         "last_run_date_wib": "-",
         "last_run_url": f"https://github.com/{GITHUB_REPO}/actions",
@@ -51,6 +52,7 @@ def check_github_actions_health(timeout: int = 5) -> Dict[str, Any]:
                 res["is_reachable"] = True
                 res["last_run_id"] = latest_run.get("id")
                 res["last_run_event"] = latest_run.get("event")
+                res["last_run_status"] = latest_run.get("status")
                 res["last_run_conclusion"] = latest_run.get("conclusion")
                 res["last_run_url"] = latest_run.get("html_url")
 
@@ -93,6 +95,7 @@ def evaluate_system_health(
     latest_date = max(articles_by_date.keys()) if articles_by_date else "-"
     latest_batch_count = len(articles_by_date.get(latest_date, []))
 
+    gh_status = gh_health.get("last_run_status", "unknown")
     gh_conclusion = gh_health.get("last_run_conclusion", "unknown")
     wf_state = gh_health.get("workflow_state", "active")
 
@@ -100,8 +103,10 @@ def evaluate_system_health(
     alerts = []
     level = "healthy"
 
-    # 1. Peringatan Kegagalan GitHub Actions
-    if gh_conclusion == "failure":
+    # 1. Peringatan Kegagalan / Status GitHub Actions
+    if gh_status == "in_progress":
+        level = "running"
+    elif gh_conclusion == "failure":
         level = "critical"
         alerts.append("Eksekusi GitHub Actions terakhir GAGAL (terdeteksi error pada pipeline runner).")
     elif wf_state != "active" and gh_health.get("is_reachable"):
@@ -110,7 +115,7 @@ def evaluate_system_health(
 
     # 2. Peringatan Kekurangan Naskah (< 4 artikel)
     if latest_batch_count > 0 and latest_batch_count < 4:
-        if level != "critical":
+        if level not in ("critical", "running"):
             level = "warning"
         alerts.append(f"Bank Naskah pada tanggal {latest_date} hanya berisi {latest_batch_count}/4 artikel (kurang {4 - latest_batch_count} genre).")
 
@@ -119,14 +124,17 @@ def evaluate_system_health(
         try:
             dt_latest = datetime.datetime.strptime(latest_date, "%Y-%m-%d").date()
             days_gap = (now_wib.date() - dt_latest).days
-            if days_gap > 1:
+            if days_gap > 1 and level != "running":
                 level = "critical"
                 alerts.append(f"Tidak ada naskah baru selama {days_gap} hari terakhir (terakhir terisi {latest_date}).")
         except Exception:
             pass
 
     # Status & Badge
-    if level == "healthy":
+    if level == "running":
+        badge = "🟡 SEDANG BERJALAN (RUNNER AKTIF)"
+        summary = "GitHub Actions sedang memproses dan menyusun naskah redaksi di Cloud."
+    elif level == "healthy":
         badge = "🟢 SISTEM SEHAT & NORMAL"
         summary = "GitHub Actions Cron aktif dan Bank Naskah H-1 (4 artikel/hari) beroperasi tepat waktu."
     elif level == "warning":
