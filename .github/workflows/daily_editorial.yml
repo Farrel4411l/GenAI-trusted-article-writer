@@ -1,4 +1,4 @@
-name: Travelista Daily Automated Editorial (21:15 WIB H-1 untuk Tayang 09:00 WIB - 4 Artikel Harian Bulan ke-1)
+name: "Travelista Daily Automated Editorial (21:15 WIB H-1 untuk Tayang 09:00 WIB - 4 Artikel Harian Bulan ke-1)"
 
 on:
   schedule:
@@ -37,7 +37,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Autonomous Daily Editorial Pipeline (Bank Naskah H-1: 21:15 WIB - 4 Artikel / Hari)
+      - name: "Run Autonomous Daily Editorial Pipeline (Bank Naskah H-1: 21:15 WIB - 4 Artikel / Hari)"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
