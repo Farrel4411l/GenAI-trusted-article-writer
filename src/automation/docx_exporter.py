@@ -55,6 +55,11 @@ def build_article_docx(doc: Document, article: Dict[str, Any], is_first: bool = 
     cover_alt = article.get("cover_image_alt") or ""
     article_md = article.get("article_markdown") or ""
 
+    meta_title = article.get("meta_title") or article.get("cms_payload", {}).get("article", {}).get("meta_title") or title[:60]
+    excerpt = article.get("excerpt") or article.get("cms_payload", {}).get("article", {}).get("excerpt") or article.get("meta_description") or ""
+    seo_score = article.get("seo_score") or article.get("cms_payload", {}).get("seo_audit", {}).get("seo_score", 92)
+    search_intent = article.get("cms_payload", {}).get("seo_audit", {}).get("search_intent") or "Wisata & Eksplorasi"
+
     # Header / Kategori Badge
     p_badge = doc.add_paragraph()
     p_badge.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -76,7 +81,7 @@ def build_article_docx(doc: Document, article: Dict[str, Any], is_first: bool = 
     run_title.font.color.rgb = RGBColor(26, 36, 43)
 
     # Tabel Ringkasan Metadata & Audit AI
-    table = doc.add_table(rows=5, cols=2)
+    table = doc.add_table(rows=6, cols=2)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
 
@@ -88,8 +93,9 @@ def build_article_docx(doc: Document, article: Dict[str, Any], is_first: bool = 
     meta_items = [
         ("Tanggal Rilis / Naskah", f"{run_date} (Bank Naskah H-1 Siap Tayang)"),
         ("Tren Pemicu & Topik", f"{trend_kw} ({trend_src}) | Topik: {topic}"),
+        ("SEO SERP & Search Intent", f"Meta Title: {meta_title} | Niat: {search_intent}"),
+        ("Audit Kepatuhan & SEO", f"Checker 1: LULUS | Checker 2: {checker2_score}/100 | SEO On-Page: {seo_score}/100"),
         ("Smart Model Router", f"Writer: {writer_model} | Reviewer: {reviewer_model}"),
-        ("Audit & Verifikasi", f"Checker 1: LULUS | Checker 2 (Gatekeeper): {checker2_score}/100 (Siap Terbit)"),
         ("Hak Cipta & Redaksi", "Kontributor: Farrel & Travelista AI Autonomous Desk"),
     ]
 

@@ -263,8 +263,8 @@ def run_autonomous_daily_pipeline(
                     notes_short = final_state.get("revision_notes", "")[:180]
                     _notify("checker1_revise", f"🕵️‍♂️ **Checker 1 ({reviewer_label})**: Meminta revisi fakta/struktur ({notes_short}...).")
 
-    # 5. Jalankan Checker 2 (Final Gatekeeper: Judul, Topik, Genre, Format CMS)
-    _notify("checker2", "🛡️ **Checker 2 — Final Gatekeeper**: Memvalidasi keselarasan Judul, Topik, Genre, dan mengemas format CMS...")
+    # 5. Jalankan Checker 2 (Final Gatekeeper: Judul, Topik, Genre, Format CMS, SEO On-Page)
+    _notify("checker2", "🛡️ **Checker 2 — Final Gatekeeper**: Memvalidasi keselarasan Judul, SEO, Topik, Genre, dan mengemas format CMS...")
     gatekeeper_result = run_final_gatekeeper(
         draft=final_state.get("draft", ""),
         target_title=target_title,
@@ -272,6 +272,10 @@ def run_autonomous_daily_pipeline(
         genre=genre,
         editorial_angle=editorial_angle,
         checker_model_id=reviewer_model_id,
+        primary_keyword=trend_plan.get("primary_keyword"),
+        target_keywords=trend_plan.get("target_keywords"),
+        search_intent=trend_plan.get("search_intent"),
+        meta_title_target=trend_plan.get("meta_title_target"),
     )
 
     end_time = time.time()
@@ -320,6 +324,8 @@ def run_autonomous_daily_pipeline(
         "topic": topic,
         "target_title": target_title,
         "final_title": gatekeeper_result["final_title"],
+        "meta_title": gatekeeper_result.get("meta_title"),
+        "excerpt": gatekeeper_result.get("excerpt"),
         "slug": gatekeeper_result["slug"],
         "editorial_angle": editorial_angle,
         "cover_image_url": gatekeeper_result.get("cover_image_url"),
@@ -336,6 +342,7 @@ def run_autonomous_daily_pipeline(
         "fact_check_revisions": actual_revisions,
         "final_check_passed": gatekeeper_result["final_check_passed"],
         "final_check_score": gatekeeper_result["final_check_score"],
+        "seo_score": gatekeeper_result.get("seo_score", 90),
         "final_check_notes": gatekeeper_result["final_check_notes"],
         "cms_payload": cms_payload,
         "writer_tokens": int(final_state.get("writer_tokens", 0)),

@@ -221,6 +221,8 @@ def build_travelista_ready_payload(
     cover_image_url: Optional[str] = None,
     cover_image_alt: Optional[str] = None,
     status: str = "review",  # 'draft' | 'review' (aman untuk redaksi)
+    meta_title: Optional[str] = None,
+    excerpt: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Menyusun payload artikel yang 100% kompatibel dengan skema tabel
@@ -241,7 +243,7 @@ def build_travelista_ready_payload(
     article_db_record = {
         "title": final_title,
         "slug": slug,
-        "excerpt": meta_description[:200] if meta_description else None,
+        "excerpt": excerpt if excerpt else (meta_description[:200] if meta_description else None),
         "content_html": content_html,
         "content_json": content_json,
         "cover_image_url": cover_image_url,  # Ditahan sesuai permintaan, default None
@@ -252,7 +254,7 @@ def build_travelista_ready_payload(
         "locale": "id",
         "is_featured": False,
         "is_breaking": False,
-        "meta_title": final_title,
+        "meta_title": meta_title or final_title,
         "meta_description": meta_description,
         "read_time_minutes": read_time_minutes,
         "published_at": None,  # Belum di-publish, siap untuk review redaksi

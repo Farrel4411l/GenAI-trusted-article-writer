@@ -147,3 +147,81 @@ Agar GitHub Actions dapat berjalan otomatis di cloud tanpa dependensi lokal, daf
 - `OPENROUTER_API_KEY`: (Opsional) Fallback provider model.
 - `TRAVELISTA_CMS_URL`: URL publik CMS Travelista (misal: `https://travelista-2026-cms.vercel.app` atau domain produksi).
 - `TRAVELISTA_CMS_API_KEY`: Secret Key yang cocok dengan `AUTO_ARTICLE_SECRET_KEY` di server CMS.
+
+---
+
+## 6. Rencana Pengembangan Lanjutan (Usulan Upgrade Diskusi Mentor): *Search-Intent Trend Intelligence & Non-Destructive SEO Packaging*
+
+Bagian ini disusun berdasarkan hasil riset silang antara repositori AI (`cobapenelitianpart3`) dan monorepo produksi **Travelista 2026** (`apps/magazine`, `apps/cms`, serta skema database `001_initial_schema.sql` dan `seed.sql`). Tujuannya adalah meningkatkan kapabilitas **Analisis Tren** dan **On-Page SEO** agar Travelista mampu mendominasi halaman pertama Google (*Top-of-Mind Travel Portal*) **tanpa melanggar prinsip *Zero-Touch Core Architecture* dan aturan ketat Anti-Halusinasi RAG**.
+
+### 6.1. Hasil Audit Keselarasan Visi & Infrastruktur Eksisting Travelista 2026
+Dari penelusuran kode pada monorepo `travelista-2026`, ditemukan bahwa:
+1. **Identitas & Positioning Resmi (`001_initial_schema.sql` & `seed.sql`)**:
+   - Tagline resmi: *"Jelajahi Nusantara Bersamamu — Portal berita perjalanan dan wisata terbaik Indonesia."*
+   - Travelista adalah **Majalah Jurnalistik Perjalanan, Budaya, & Kuliner (*Editorial Travel Magazine*)**, bukan katalog *listing* harga seperti OTA (*Online Travel Agent*), namun memiliki ekosistem pendukung berupa portal `apps/tiketing` (Tiket Kapal & Paket Wisata).
+   - Taksonomi tag resmi di database (`seed.sql`) sudah dirancang untuk menangkap **Wilayah** (`Bali`, `Yogyakarta`, `Labuan Bajo`, `Raja Ampat`, dll.) dan **Gaya/Niat Perjalanan (*Travel Mood/Intent*)** (`Wisata Alam`, `Wisata Budaya`, `Wisata Kuliner`, `Backpacker`, `Luxury Travel`, `Family Travel`, `Solo Travel`, `Weekend Getaway`).
+2. **Kapabilitas SEO Bawaan di Frontend Nuxt 4 (`apps/magazine`)**:
+   - Halaman baca artikel (`[year]/[month]/[day]/[slug].vue`) **sudah memiliki**:
+     - `NewsArticle` & `BreadcrumbList` JSON-LD otomatis.
+     - `SpeakableSpecification` (Google Assistant / AI Overview ready) yang menargetkan selector `['h1', '.article-excerpt', '.article-content p:first-child']`.
+     - Pemisahan antara `article.title` (judul editorial di halaman) dan `article.meta_title` (judul SEO di `<title>` browser & SERP Google), serta pemisahan antara `article.excerpt` (lead ringkasan di bawah judul) dan `article.meta_description`.
+     - Mesin rekomendasi **Artikel Terkait (`fetchRelatedArticles` di `useArticles.ts`)** berbasis rumus skor tertimbang:
+       $$\text{Score} = (\text{Shared Tags} \times 2) + (\text{Same Category} \times 3) + \text{Recency Boost}$$
+     - Indeks pencarian teks penuh Bahasa Indonesia (`idx_articles_fts` menggunakan `to_tsvector('indonesian', title || excerpt)`).
+
+### 6.2. Batasan Kritis: Apa yang TIDAK BOLEH Dilakukan (Menjaga Kemurnian Riset & Anti-Halusinasi)
+Agar peningkatan SEO **tidak membawa perubahan destruktif** yang merusak eksperimen ilmiah maupun kredibilitas jurnalistik Travelista, 3 hal berikut **DILARANG** dilakukan:
+1. **Dilarang Memaksa AI Menulis Harga Tiket, Jam Operasional, atau Angka Budget Tanpa Sumber RAG**:
+   - Basis pengetahuan RAG kita bersumber dari Wikipedia Indonesia & Wikivoyage (`pgvector`) yang bersifat ensiklopedis dan historis/geografis, bukan database tarif komersial harian.
+   - Memaksa `Writer Agent` menulis harga tiket atau itinerary biaya akan memicu halusinasi dan menyebabkan draf **ditolak oleh Checker 1 (`reviewer_agent.py`)**.
+2. **Dilarang Mengubah Prompt Inti 5–8 Paragraf pada `src/agents/prompts.py`**:
+   - Mesin inti (`writer_agent.py`, `reviewer_agent.py`, `orchestrator.py`) harus tetap murni menghasilkan 5–8 paragraf naratif terverifikasi agar metrik riset (`experiment_metrics.csv`) tetap konsisten.
+3. **Dilarang Mengubah Skema Tabel Database Produksi (`001_initial_schema.sql`)**:
+   - Seluruh peningkatan SEO harus memanfaatkan kolom yang sudah tersedia di tabel `public.articles` (`title`, `meta_title`, `excerpt`, `meta_description`, `content_html`, `content_json`, dan `tags`).
+
+### 6.3. Empat (4) Peningkatan Strategis yang Sejalan 100% dengan Travelista (Non-Destructive Upgrades)
+
+Seluruh peningkatan ditempatkan secara terisolasi di dalam folder `src/automation/` (Tahap Pra-Penulisan di `trend_hunter.py` dan Tahap Pasca-Verifikasi di `final_checker_agent.py` & `travelista_adapter.py`):
+
+#### Upgrade A: *Search-Intent & Google Autocomplete Enrichment* (`src/automation/trend_hunter.py`)
+Mengubah analisis tren dari sekadar "pembaca berita pasif" menjadi **mesin pemetaan niat pencarian wisata (*Travel Search Intent*)**:
+1. **Filter Relevansi Wisata & Gaya Hidup (*Editorial Travel Filter*)**:
+   - Menyaring berita birokrasi/politik murni dari RSS Google News agar topik yang terpilih selalu memiliki sudut pandang **daya tarik destinasi, pengalaman liburan (*healing/eksplorasi*), keunikan budaya, atau kelezatan kuliner**.
+2. **Integrasi *Google Search Autocomplete Indonesia* (Tanpa API Key Berbayar)**:
+   - Saat sebuah kandidat topik/entitas ditemukan (misal: `"Desa Wisata Nglanggeran"` atau `"Danau Toba"`), sistem memanggil endpoint publik `suggestqueries.google.com` (`hl=id&gl=ID`) untuk memanen **kata kunci pencarian nyata (*long-tail keywords*)** yang diketik masyarakat Indonesia.
+3. **Kesadaran Musim & Kalender Liburan (*Seasonal Context*)**:
+   - Menambahkan konteks waktu (misal: *akhir pekan / weekend getaway*, *musim liburan*, atau *suasana healing alam*) ke dalam `editorial_angle` tanpa melanggar fakta dokumen sumber.
+
+#### Upgrade B: *Dual-Title Strategy (`title` vs `meta_title`) & Speakable `excerpt`* (`src/automation/final_checker_agent.py` & `travelista_adapter.py`)
+Memaksimalkan fitur yang sudah ada di Nuxt 4 `apps/magazine` namun belum diisi secara terpisah oleh bot AI:
+1. **`final_title` (Judul Editorial Majalah)**: Tetap bergaya jurnalistik majalah perjalanan yang elegan dan inspiratif.
+2. **`meta_title` (Judul SERP Google $\le 60$ Karakter)**: Dioptimasi khusus dengan *Primary Keyword* di bagian depan agar menonjol di halaman 1 Google (contoh: *"Wisata Desa Nglanggeran Gunungkidul: Daya Tarik & Sejarah"*).
+3. **`excerpt` (Ringkasan *Speakable* & Indeks FTS)**: Membuat 1–2 kalimat ringkasan padat yang menjawab langsung inti topik (*Direct Answer*). Di web Travelista, `excerpt` ini dirender dengan garis aksen kuning (*saffron*), diindeks oleh PostgreSQL *Full-Text Search*, dan ditargetkan oleh `SpeakableSpecification` untuk *Google AI Overviews*.
+4. **`meta_description` (120–155 Karakter)**: Dirancang khusus dengan *call-to-action* halus untuk meningkatkan rasio klik (*Click-Through Rate* / CTR) dari mesin pencari.
+
+#### Upgrade C: *Smart Taxonomy Tagging* untuk Mengaktifkan *Topic Cluster* (`src/automation/final_checker_agent.py`)
+Menyelaraskan pembuatan tag dengan algoritma `fetchRelatedArticles` di `apps/magazine/app/composables/useArticles.ts`:
+- Alih-alih membuat 5 tag acak yang selalu berbeda tiap hari, `Checker 2` diinstruksikan memilih kombinasi **5 Tag Terstandarisasi**:
+  1. **1–2 Tag Lokasi/Destinasi Induk** (contoh: `Yogyakarta`, `Bali`, `Lombok`, `Sumatera Barat`, `Jawa Timur`).
+  2. **1–2 Tag Niat/Gaya Perjalanan Standar Travelista** (contoh: `Wisata Alam`, `Wisata Budaya`, `Wisata Kuliner`, `Weekend Getaway`, `Family Travel`, `Solo Travel`).
+  3. **1–2 Tag Entitas Spesifik Artikel**.
+- **Dampak Langsung**: Artikel lintas-genre yang membahas wilayah atau suasana serupa akan otomatis saling terhubung di widget **"Artikel Terkait"** pada web Travelista (memperkuat *Topical Authority* di mata Googlebot).
+
+#### Upgrade D: *Post-Verification Subheadings (`H2`) & Automated Internal Linking* (`src/automation/final_checker_agent.py`)
+Dilakukan **SETELAH** draf lulus dari `Checker 1 (Fact-Checker)` sehingga tidak mengganggu validasi 5–8 paragraf di mesin inti:
+1. **Penyisipan Sub-Judul Kontekstual (`## H2`)**:
+   - Mengelompokkan 5–8 paragraf yang sudah terverifikasi menjadi 2–3 sub-bagian ber-heading `## (H2)` yang memuat kata kunci turunan, sehingga artikel mudah dipindai (*scannable*) oleh pembaca maupun *crawler* Google.
+2. **Injeksi *Internal Link ("Baca Juga")* Otomatis dari Database Supabase**:
+   - Mengecek arsip artikel yang sudah tersimpan di Supabase untuk kategori atau wilayah yang berkaitan, lalu menyisipkan tautan internal kontekstual guna mencegah halaman terisolasi (*orphan pages*).
+3. **Rincian Skor SEO di Checker 2**:
+   - Memperkaya `final_check_notes` dengan indikator kepatuhan SEO (*Keyword di Judul/Meta*, *Panjang Meta Ideal*, *Struktur H2*, dan *Kelengkapan Sitasi*).
+
+### 6.4. Matriks Perbandingan Dampak (Sebelum vs Sesudah Upgrade)
+
+| Komponen | Kondisi Saat Ini | Setelah Upgrade (Usulan Fase 2) | Dampak terhadap Mesin Inti RAG |
+| :--- | :--- | :--- | :--- |
+| **Pemilihan Tren** | Hanya RSS berita umum (sering bias berita seremonial/birokrasi) | RSS Berita + **Google Autocomplete Suggest ID** + Filter *Travel/Healing Intent* | **0% Perubahan** pada `search.py` / `orchestrator.py` |
+| **Judul & Meta** | `meta_title` & `excerpt` disamakan dengan `title` & `meta_description` | Dipisah khusus: `title` (Jurnalistik), `meta_title` (SERP $\le 60$ kar), `excerpt` (*Speakable* AI), `meta_description` (CTR) | **0% Perubahan** pada database schema (kolom sudah tersedia di CMS) |
+| **Struktur Baca** | 5–8 paragraf polos tanpa sub-judul | 5–8 paragraf terverifikasi + **2–3 Sub-judul `H2`** & tautan **"Baca Juga"** pasca-verifikasi | **0% Perubahan** pada aturan `writer_agent.py` & `reviewer_agent.py` |
+| **Koneksi Antar-Artikel** | Tag acak per artikel (skor *Related Articles* rendah) | **Standarisasi Tag Wilayah & Mood** sesuai `seed.sql` Travelista | Mengaktifkan *Topic Cluster* otomatis di frontend Nuxt 4 |
+

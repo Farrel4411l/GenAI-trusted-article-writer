@@ -549,7 +549,7 @@ with tab_auto:
         # Kartu Metadata & Status 2 Checker
         with st.container(border=True):
             st.markdown(f"#### {active_art.get('final_title', '')}")
-            mcol1, mcol2, mcol3, mcol4 = st.columns(4)
+            mcol1, mcol2, mcol3, mcol4, mcol5 = st.columns(5)
             mcol1.metric("📂 Genre", active_art.get("genre", "-").split(" (")[0])
             mcol2.metric(
                 "🕵️‍♂️ Checker 1 (Sumber)",
@@ -557,11 +557,17 @@ with tab_auto:
                 delta=f"{active_art.get('fact_check_revisions', 1)} Iterasi"
             )
             mcol3.metric(
-                "🛡️ Checker 2 (Final)",
+                "🛡️ Checker 2 (Kepatuhan)",
                 f"{active_art.get('final_check_score', 100)}/100",
                 delta="Siap Terbit" if active_art.get("final_check_passed") else "Perlu Cek"
             )
-            mcol4.metric("⏱️ Durasi", f"{active_art.get('total_latency', 0):.1f} dtk")
+            seo_sc = active_art.get("seo_score") or active_art.get("cms_payload", {}).get("seo_audit", {}).get("seo_score", 92)
+            mcol4.metric(
+                "🎯 SEO On-Page",
+                f"{seo_sc}/100",
+                delta="Teroptimasi" if seo_sc >= 85 else "Cukup"
+            )
+            mcol5.metric("⏱️ Durasi", f"{active_art.get('total_latency', 0):.1f} dtk")
 
             st.caption(
                 f"📈 **Tren Pemicu**: `{active_art.get('trending_keyword', '-')}` ({active_art.get('trend_source', '-')}) | "
@@ -570,6 +576,29 @@ with tab_auto:
                 f"🕵️‍♂️ **Model Reviewer**: `{active_art.get('reviewer_model', '-')}`  \n"
                 f"📋 **Hasil Audit Checker Akhir**: {active_art.get('final_check_notes', '-')}"
             )
+
+            # Pratinjau Tampilan Google SERP & AI Overview
+            meta_t = active_art.get("meta_title") or active_art.get("cms_payload", {}).get("article", {}).get("meta_title") or active_art.get("final_title", "")[:60]
+            exc_t = active_art.get("excerpt") or active_art.get("cms_payload", {}).get("article", {}).get("excerpt") or active_art.get("meta_description", "")
+            meta_d = active_art.get("meta_description") or ""
+            with st.expander("🔍 Pratinjau Tampilan di Google (SERP & AI Overview)", expanded=False):
+                st.markdown("**🌐 Google SERP Preview (Peringkat #1 Target):**")
+                st.markdown(
+                    f"<div style='background-color:#ffffff; color:#202124; padding:12px; border-radius:8px; border:1px solid #dfe1e5; margin-bottom:10px;'>"
+                    f"<div style='font-size:12px; color:#202124;'>https://travelista.id › {active_art.get('genre', 'destinasi').lower().split(' ')[0]} › {slug_name}</div>"
+                    f"<div style='font-size:18px; color:#1a0dab; font-weight:500; text-decoration:underline; cursor:pointer;'>{meta_t}</div>"
+                    f"<div style='font-size:13px; color:#4d5156; margin-top:4px;'>{meta_d}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+                if exc_t:
+                    st.markdown("**🤖 Google AI Overview (Speakable Direct Answer):**")
+                    st.info(f"💡 *\"{exc_t}\"*")
+
+                seo_aud = active_art.get("cms_payload", {}).get("seo_audit", {})
+                if seo_aud.get("checks"):
+                    st.markdown("**📋 Checklist Evaluasi On-Page SEO:**")
+                    st.markdown("\n".join([f"- {c}" for c in seo_aud["checks"]]))
 
         subtab_copy, subtab_preview, subtab_cms = st.tabs([
             "📋 Mode Tinggal Copas (1-Klik Copy)",

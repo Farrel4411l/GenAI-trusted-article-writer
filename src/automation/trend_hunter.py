@@ -116,6 +116,117 @@ def fetch_google_trends_id(max_items: int = 10) -> List[Dict[str, str]]:
     return items
 
 
+def fetch_google_autocomplete(query: str, max_items: int = 6) -> List[str]:
+    """
+    Mengambil kata kunci pencarian real-time (long-tail keywords) dari Google Suggest Indonesia
+    tanpa memerlukan API key berbayar.
+    """
+    clean_q = query.strip()
+    if not clean_q:
+        return []
+    encoded_q = urllib.parse.quote(clean_q)
+    url = f"https://suggestqueries.google.com/complete/search?client=chrome&hl=id&gl=ID&q={encoded_q}"
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; TravelistaSeoBot/2.0)"}
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+            if len(data) > 1 and isinstance(data[1], list):
+                suggestions = [str(item).strip().lower() for item in data[1] if item]
+                return suggestions[:max_items]
+    except Exception as e:
+        print(f"[Trend Hunter] Info autocomplete untuk '{clean_q}': {e}")
+    return []
+
+
+def mine_travel_search_keywords(topic: str, genre: str) -> Dict[str, Any]:
+    """
+    Memetakan kata kunci pencarian riil (Search-Intent Keywords) dan niat pengguna Google:
+    1. Primary Keyword (kata kunci utama dengan volume/relevansi tertinggi)
+    2. Target Keywords (3-5 kata kunci turunan/long-tail untuk heading & paragraf)
+    3. Search Intent (Kategori niat: Healing, Kuliner Autentik, Sejarah/Misteri, Budaya)
+    4. Meta Title Target (Judul SERP singkat <= 60 karakter yang ramah mesin pencari)
+    """
+    # Pisahkan entitas dari topic (misal "Kawah Ijen dan Banyuwangi" -> ["Kawah Ijen", "Banyuwangi"])
+    parts = re.split(r'\b(?:dan|serta|atau)\b|[,&/]', topic, flags=re.IGNORECASE)
+    entities = [p.strip() for p in parts if len(p.strip()) >= 3]
+    main_entity = entities[0] if entities else topic.strip()
+    sub_entity = entities[1] if len(entities) > 1 else ""
+
+    # Tentukan Search Intent default berbasis Genre
+    intent_map = {
+        "Wisata & Destinasi (Travel)": "Wisata Alam, Healing, & Spot Liburan Eksploratif",
+        "Kuliner Nusantara": "Wisata Kuliner Tradisional & Cita Rasa Autentik",
+        "Sejarah & Misteri Lokal": "Wisata Sejarah, Arkeologi, & Misteri Budaya Lokal",
+        "Budaya & Fakta Unik": "Warisan Budaya, Tradisi Adat, & Kearifan Lokal Nusantara",
+    }
+    search_intent = intent_map.get(genre, "Panduan Wisata & Gaya Hidup Travelista")
+
+    # Kumpulkan variasi kata kunci dari Google Suggest
+    raw_keywords: List[str] = []
+
+    # 1. Kueri langsung entitas utama
+    raw_keywords.extend(fetch_google_autocomplete(main_entity, max_items=4))
+
+    # 2. Kueri kontekstual berbasis genre
+    if "wisata" in genre.lower() or "travel" in genre.lower():
+        raw_keywords.extend(fetch_google_autocomplete(f"wisata {main_entity}", max_items=4))
+        raw_keywords.extend(fetch_google_autocomplete(f"tempat healing di {main_entity}", max_items=3))
+    elif "kuliner" in genre.lower():
+        raw_keywords.extend(fetch_google_autocomplete(f"kuliner khas {main_entity}", max_items=4))
+        raw_keywords.extend(fetch_google_autocomplete(f"makanan enak di {main_entity}", max_items=3))
+    elif "sejarah" in genre.lower() or "misteri" in genre.lower():
+        raw_keywords.extend(fetch_google_autocomplete(f"sejarah {main_entity}", max_items=4))
+        raw_keywords.extend(fetch_google_autocomplete(f"misteri {main_entity}", max_items=3))
+    else:
+        raw_keywords.extend(fetch_google_autocomplete(f"tradisi {main_entity}", max_items=4))
+        raw_keywords.extend(fetch_google_autocomplete(f"keunikan {main_entity}", max_items=3))
+
+    # Bersihkan & deduplikasi
+    unique_kw = []
+    seen = set()
+    for kw in raw_keywords:
+        kw_clean = kw.strip().lower()
+        if kw_clean and kw_clean not in seen and len(kw_clean) > 4:
+            seen.add(kw_clean)
+            unique_kw.append(kw_clean)
+
+    # Tentukan Primary Keyword
+    primary_kw = unique_kw[0] if unique_kw else f"wisata {main_entity.lower()}"
+
+    # Pastikan ada 3-5 target keywords
+    target_kw = unique_kw[:5]
+    if len(target_kw) < 3:
+        target_kw.extend([
+            f"daya tarik {main_entity.lower()}",
+            f"tips berkunjung ke {main_entity.lower()}",
+            f"rekomendasi {main_entity.lower()}"
+        ])
+        target_kw = list(dict.fromkeys(target_kw))[:5]
+
+    # Buat Target Meta Title (<= 60 karakter, primary keyword di depan)
+    if "wisata" in genre.lower() or "travel" in genre.lower():
+        candidate_meta = f"{main_entity}: Daya Tarik, Info & Panduan Wisata"
+    elif "kuliner" in genre.lower():
+        candidate_meta = f"{main_entity}: Cita Rasa & Rekomendasi Kuliner"
+    elif "sejarah" in genre.lower():
+        candidate_meta = f"{main_entity}: Sejarah, Misteri & Fakta Menarik"
+    else:
+        candidate_meta = f"{main_entity}: Tradisi, Filosofi & Keunikan Budaya"
+
+    if len(candidate_meta) > 60:
+        candidate_meta = candidate_meta[:57] + "..."
+
+    return {
+        "primary_keyword": primary_kw,
+        "target_keywords": target_kw,
+        "search_intent": search_intent,
+        "meta_title_target": candidate_meta,
+        "main_entity": main_entity,
+        "sub_entity": sub_entity,
+    }
+
+
 def fetch_google_news_by_genre(genre: str, max_items: int = 5) -> List[Dict[str, str]]:
     """
     Mengambil berita & topik yang sedang hangat di Google News Indonesia sesuai Genre Travelista.
@@ -219,9 +330,10 @@ ATURAN WAJIB:
    - "Kuliner Nusantara"
    - "Sejarah & Misteri Lokal"
    - "Budaya & Fakta Unik"
-2. KETERSEDIAAN ENSIKLOPEDIA: Pastikan nilai `topic` berupa 1 atau 2 entitas spesifik di Indonesia yang PASTI memiliki halaman di Wikipedia Bahasa Indonesia (contoh format `topic`: "Kawah Ijen dan Banyuwangi", "Rendang dan Masakan Padang", "Lawang Sewu dan Kota Semarang", "Suku Baduy dan Kabupaten Lebak"). Jangan gunakan kalimat panjang pada `topic` agar mesin pencari database vektor & Wikipedia bekerja optimal.
-3. HINDARI DUPLIKASI: Jangan memilih topik yang sudah ada di daftar TOPIK YANG SUDAH DITULIS.
-4. OUTPUT WAJIB berupa JSON murni (tanpa teks pembuka/penutup) dengan struktur persis berikut:
+2. FILTER NIAT WISATA & LIFESTYLE: Prioritaskan sinyal tren yang memiliki daya tarik wisata, spot liburan/healing, kelezatan kuliner lokal, latar sejarah ikonik, atau keunikan budaya Nusantara. Hindari topik politik murni, hukum, atau seremoni birokrasi yang tidak relevan dengan traveler.
+3. KETERSEDIAAN ENSIKLOPEDIA: Pastikan nilai `topic` berupa 1 atau 2 entitas spesifik di Indonesia yang PASTI memiliki halaman di Wikipedia Bahasa Indonesia (contoh format `topic`: "Kawah Ijen dan Banyuwangi", "Rendang dan Masakan Padang", "Lawang Sewu dan Kota Semarang", "Suku Baduy dan Kabupaten Lebak"). Jangan gunakan kalimat panjang pada `topic` agar mesin pencari database vektor & Wikipedia bekerja optimal.
+4. HINDARI DUPLIKASI: Jangan memilih topik yang sudah ada di daftar TOPIK YANG SUDAH DITULIS.
+5. OUTPUT WAJIB berupa JSON murni (tanpa teks pembuka/penutup) dengan struktur persis berikut:
 {
   "genre": "Nama Genre Resmi",
   "trending_keyword": "Kata kunci atau berita tren yang memicu pemilihan topik ini",
@@ -268,6 +380,7 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
             if target_title.lower() in recent_lower:
                 target_title = f"{target_title}: Perspektif Baru & Fakta Mendalam ({datetime.now().strftime('%d %b %Y')})"
             if topic and target_title:
+                seo_intel = mine_travel_search_keywords(topic, genre)
                 return {
                     "genre": genre,
                     "trending_keyword": parsed.get("trending_keyword", topic),
@@ -278,6 +391,10 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
                         "editorial_angle",
                         f"Mengulas mendalam daya tarik, sejarah, dan keunikan {topic} bagi pembaca Travelista."
                     ),
+                    "primary_keyword": seo_intel["primary_keyword"],
+                    "target_keywords": seo_intel["target_keywords"],
+                    "search_intent": seo_intel["search_intent"],
+                    "meta_title_target": seo_intel["meta_title_target"],
                     "raw_signals_count": len(live_signals),
                     "live_signals_preview": [s["title"] for s in live_signals[:6]],
                     "live_signals_evidence": live_signals[:25],
@@ -296,6 +413,7 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
     if fallback_title.lower() in recent_lower:
         fallback_title = f"{fallback_title} (Edisi {datetime.now().strftime('%d %b %Y')})"
 
+    seo_intel = mine_travel_search_keywords(picked["topic"], chosen_genre)
     return {
         "genre": chosen_genre,
         "trending_keyword": f"{picked['keyword']} (Tren: {top_signal[:45]})",
@@ -306,6 +424,10 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
             f"Mengupas tuntas keunikan, latar sejarah, serta daya tarik utama dari {picked['topic']} "
             f"dengan gaya jurnalistik mendalam khas Travelista.id."
         ),
+        "primary_keyword": seo_intel["primary_keyword"],
+        "target_keywords": seo_intel["target_keywords"],
+        "search_intent": seo_intel["search_intent"],
+        "meta_title_target": seo_intel["meta_title_target"],
         "raw_signals_count": len(live_signals),
         "live_signals_preview": [s["title"] for s in live_signals[:6]],
         "live_signals_evidence": live_signals[:25],
