@@ -1,3 +1,4 @@
+import re
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, Callable
@@ -15,6 +16,36 @@ from src.automation.storage_supabase import (
 WIB_TZ = timezone(timedelta(hours=7))
 
 _wiki_patched = False
+
+_REFUSAL_PHRASES = (
+    "tidak terdapat informasi",
+    "tidak ada informasi",
+    "konteks yang diberikan tidak",
+    "konteks tidak menyediakan",
+    "tidak memiliki informasi",
+    "mohon maaf, saya tidak",
+)
+
+
+def _extract_primary_entity(raw_topic: str) -> str:
+    """Ambil entitas tunggal utama jika LLM/planner menghasilkan topik majemuk 'A dan B'."""
+    text = (raw_topic or "").strip()
+    if not text:
+        return text
+    primary = re.split(r"\s+(?:dan|serta|atau)\s+|[,&/]", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+    return primary or text
+
+
+def _is_broken_or_refusal_draft(draft_text: str) -> bool:
+    """Deteksi draf penolakan RAG atau draf terpotong sebelum masuk Checker 2 & Supabase."""
+    text = (draft_text or "").strip()
+    if len(text) < 600:
+        return True
+    paragraphs = [p for p in re.split(r"\n\s*\n", text) if len(p.strip()) > 30]
+    if len(paragraphs) < 3:
+        return True
+    lower_head = text[:800].lower()
+    return any(phrase in lower_head for phrase in _REFUSAL_PHRASES)
 
 
 def _fetch_wiki_html_fallback(title_or_query: str) -> Dict[str, str]:
@@ -195,7 +226,10 @@ def run_autonomous_daily_pipeline(
     genre = trend_plan["genre"]
     trending_keyword = trend_plan["trending_keyword"]
     trend_source = trend_plan["trend_source"]
-    topic = trend_plan["topic"]
+    raw_topic = trend_plan["topic"]
+    topic = _extract_primary_entity(raw_topic)
+    if topic != raw_topic.strip():
+        print(f"[Daily Pipeline] Menyederhanakan topik majemuk '{raw_topic}' -> '{topic}' agar presisi RAG maksimal.")
     target_title = trend_plan["target_title"]
     editorial_angle = trend_plan["editorial_angle"]
 
@@ -262,6 +296,59 @@ def run_autonomous_daily_pipeline(
                 else:
                     notes_short = final_state.get("revision_notes", "")[:180]
                     _notify("checker1_revise", f"🕵️‍♂️ **Checker 1 ({reviewer_label})**: Meminta revisi fakta/struktur ({notes_short}...).")
+
+    # 4b. Post-Orchestrator Draft Validity Guard (cegah draf penolakan/terpotong masuk database)
+    if _is_broken_or_refusal_draft(final_state.get("draft", "")):
+        clean_topic = _extract_primary_entity(topic)
+        recovery_writer = writer_model_id
+        recovery_note = f"entitas tunggal `{clean_topic}`"
+        if clean_topic.lower() != topic.strip().lower():
+            topic = clean_topic
+        else:
+            recovery_writer = (
+                "cohere/command-a-plus-05-2026"
+                if writer_model_id != "cohere/command-a-plus-05-2026"
+                else "gemini/gemini-3.5-flash"
+            )
+            recovery_note = f"Writer cadangan `{recovery_writer}`"
+
+        _notify(
+            "recovery",
+            f"⚠️ **Draft Validity Guard**: Draf awal terdeteksi tidak utuh/penolakan RAG; menjalankan 1x **Recovery Pass** dengan {recovery_note}..."
+        )
+        time.sleep(5)
+        recovery_state = {
+            "topic": topic,
+            "context": "",
+            "draft": "",
+            "revision_notes": editorial_brief,
+            "revision_count": 1,
+            "is_passed": False,
+            "writer_model": recovery_writer,
+            "reviewer_model": reviewer_model_id,
+            "writer_tokens": int(final_state.get("writer_tokens", 0)),
+            "reviewer_tokens": int(final_state.get("reviewer_tokens", 0)),
+            "grader_tokens": int(final_state.get("grader_tokens", 0)),
+            "start_time": start_time,
+        }
+        recovery_final = recovery_state.copy()
+        for event in app_graph.stream(recovery_state):
+            for node_name, state_update in event.items():
+                recovery_final.update(state_update)
+                if node_name == "writer":
+                    iter_num = recovery_final.get("revision_count", 1)
+                    _notify("writer", f"✍️ **Recovery Writer ({recovery_writer})**: Selesai menyusun draf (Iterasi ke-{iter_num}).")
+                elif node_name == "reviewer" and recovery_final.get("is_passed"):
+                    _notify("checker1_pass", f"🕵️‍♂️ **Recovery Checker 1 ({reviewer_label})**: **LULUS** (Fakta & sitasi valid).")
+
+        if not _is_broken_or_refusal_draft(recovery_final.get("draft", "")) or len(recovery_final.get("draft", "")) > len(final_state.get("draft", "")):
+            final_state = recovery_final
+            writer_model_id = recovery_writer
+        else:
+            # Tetap akumulasi token recovery walau draf lama dipertahankan
+            final_state["writer_tokens"] = int(recovery_final.get("writer_tokens", final_state.get("writer_tokens", 0)))
+            final_state["reviewer_tokens"] = int(recovery_final.get("reviewer_tokens", final_state.get("reviewer_tokens", 0)))
+            final_state["grader_tokens"] = int(recovery_final.get("grader_tokens", final_state.get("grader_tokens", 0)))
 
     # 5. Jalankan Checker 2 (Final Gatekeeper: Judul, Topik, Genre, Format CMS, SEO On-Page)
     _notify("checker2", "🛡️ **Checker 2 — Final Gatekeeper**: Memvalidasi keselarasan Judul, SEO, Topik, Genre, dan mengemas format CMS...")

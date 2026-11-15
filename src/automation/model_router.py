@@ -21,15 +21,15 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-20b",
             "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Wisata & Destinasi membutuhkan narasi panjang 5-8 paragraf yang utuh tanpa "
             "pemotongan token output (dipilih Gemini 3.5 Flash sebagai Writer+Grader) dan "
-            "diverifikasi silang secara ketat oleh GPT-OSS 120B (Groq) sebagai Fact-Checker."
+            "diverifikasi silang oleh GPT-OSS 120B (Groq) / Command A+ (Cohere) sebagai Fact-Checker."
         ),
     },
     "Kuliner Nusantara": {
@@ -40,15 +40,15 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
             "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
             "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Kuliner Nusantara menuntut deskripsi mendalam 5-8 paragraf beserta sitasi lengkap "
-            "(Gemini 3.5 Flash sebagai Writer+Grader) dengan evaluasi lintas-model oleh GPT-OSS 120B (Groq)."
+            "(Gemini 3.5 Flash sebagai Writer+Grader) dengan evaluasi lintas-model oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
         ),
     },
     "Sejarah & Misteri Lokal": {
@@ -60,15 +60,15 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
         ],
         "reviewer": [
             "groq/openai/gpt-oss-120b",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-20b",
             "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Sejarah & Misteri Lokal padat akan angka tahun, nama tokoh, dan kronologi "
             "sehingga menggunakan Gemini 3.5 Flash (konteks luas untuk sintesis multi-dokumen & Grader) "
-            "serta GPT-OSS 120B (Groq) sebagai Fact-Checker berpenalaran tinggi."
+            "serta GPT-OSS 120B (Groq) / Command A+ (Cohere) sebagai Fact-Checker berpenalaran tinggi."
         ),
     },
     "Budaya & Fakta Unik": {
@@ -79,39 +79,63 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
             "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
             "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
-            "cohere/command-a-plus-05-2026",
         ],
         "rationale": (
             "Genre Budaya & Fakta Unik memerlukan sintesis lintas-sumber yang presisi "
-            "(Gemini 3.5 Flash sebagai Writer+Grader) dan verifikasi fakta oleh GPT-OSS 120B (Groq)."
+            "(Gemini 3.5 Flash sebagai Writer+Grader) dan verifikasi fakta oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
         ),
     },
 }
 
 _GEMINI_EXHAUSTED = False
+_GEMINI_EXHAUSTED_UNTIL = 0.0
+_GEMINI_EXHAUSTED_TTL_SECONDS = 3600.0
+
 
 def is_gemini_quota_exhausted() -> bool:
-    global _GEMINI_EXHAUSTED
-    if _GEMINI_EXHAUSTED:
-        return True
+    global _GEMINI_EXHAUSTED, _GEMINI_EXHAUSTED_UNTIL
+    now = time.time()
     if os.getenv("GEMINI_EXHAUSTED", "false").lower() in ("true", "1", "yes"):
-        return True
-    flag_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "gemini_exhausted.flag")
-    if os.path.exists(flag_path) or os.path.exists("gemini_exhausted.flag"):
-        return True
+        if _GEMINI_EXHAUSTED_UNTIL and now >= _GEMINI_EXHAUSTED_UNTIL:
+            os.environ.pop("GEMINI_EXHAUSTED", None)
+        else:
+            return True
+    if _GEMINI_EXHAUSTED:
+        if _GEMINI_EXHAUSTED_UNTIL and now < _GEMINI_EXHAUSTED_UNTIL:
+            return True
+        _GEMINI_EXHAUSTED = False
+        _GEMINI_EXHAUSTED_UNTIL = 0.0
+    flag_candidates = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "gemini_exhausted.flag"),
+        "gemini_exhausted.flag",
+    ]
+    for flag_path in flag_candidates:
+        if os.path.exists(flag_path):
+            try:
+                with open(flag_path, "r") as f:
+                    ts = float((f.read() or "0").strip())
+                if (now - ts) < _GEMINI_EXHAUSTED_TTL_SECONDS:
+                    return True
+                os.remove(flag_path)
+            except Exception:
+                return True
     return False
 
+
 def mark_gemini_exhausted():
-    global _GEMINI_EXHAUSTED
+    global _GEMINI_EXHAUSTED, _GEMINI_EXHAUSTED_UNTIL
+    now = time.time()
     _GEMINI_EXHAUSTED = True
+    _GEMINI_EXHAUSTED_UNTIL = now + _GEMINI_EXHAUSTED_TTL_SECONDS
     os.environ["GEMINI_EXHAUSTED"] = "true"
     try:
         with open("gemini_exhausted.flag", "w") as f:
-            f.write(str(time.time()))
+            f.write(str(now))
     except Exception:
         pass
 

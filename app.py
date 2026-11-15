@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import json
+from datetime import datetime, timezone, timedelta
 
 # Memaksa stdout ke UTF-8 (Fix untuk Windows Charmap Error)
 if sys.stdout.encoding.lower() != 'utf-8':
@@ -394,6 +395,14 @@ with tab_auto:
                 use_container_width=True
             )
 
+        skip_done_today = False
+        if selected_pref_genre is None:
+            skip_done_today = st.checkbox(
+                "⏭️ Lewati genre yang sudah terbit hari ini (Hemat Kuota)",
+                value=True,
+                help="Jika dicentang, genre yang sudah memiliki naskah valid (Skor Checker 2 >= 60) untuk tanggal hari ini akan dilewati agar kuota API hemat.",
+            )
+
         if btn_preview_trend:
             with st.spinner("Memindai Google Trends & Google News Indonesia serta menghitung rute model..."):
                 recent_list = get_recent_topics(limit=30)
@@ -425,36 +434,107 @@ with tab_auto:
 
         if btn_run_auto_now:
             target_run_genres = TRAVELISTA_GENRES if selected_pref_genre is None else [selected_pref_genre]
+            today_wib_str = datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d")
+            genres_to_run = list(target_run_genres)
+
             with st.status(f"🚀 Menjalankan Pipeline Redaksi Otomatis ({len(target_run_genres)} Artikel)...", expanded=True) as auto_status:
-                created_articles = []
-                for g_idx, g_item in enumerate(target_run_genres, 1):
-                    st.write(f"---\n**[{g_idx}/{len(target_run_genres)}] Memproses Genre:** `{g_item}`...")
-                    def _ui_progress(stage: str, message: str, current_g=g_item):
-                        if stage in ("checker1_pass", "checker2_done", "complete"):
-                            st.success(f"[{current_g}] {message}")
-                        elif stage == "checker1_revise":
-                            st.warning(f"[{current_g}] {message}")
-                        else:
-                            st.write(f"[{current_g}] {message}")
-
+                if skip_done_today and selected_pref_genre is None:
                     try:
-                        art = run_autonomous_daily_pipeline(
-                            preferred_genre=g_item,
-                            progress_callback=_ui_progress
-                        )
-                        created_articles.append(art)
-                    except Exception as e:
-                        st.error(f"Gagal pada genre '{g_item}': {e}")
+                        existing_today = get_daily_articles(limit=12)
+                        done_genres_today = {
+                            a.get("genre")
+                            for a in existing_today
+                            if str(a.get("run_date", ""))[:10] == today_wib_str
+                            and (a.get("final_check_score") or 0) >= 60
+                        }
+                        if done_genres_today:
+                            genres_to_run = [g for g in target_run_genres if g not in done_genres_today]
+                            for skipped_g in target_run_genres:
+                                if skipped_g in done_genres_today:
+                                    st.info(f"⏭️ Melewati `{skipped_g}` (sudah terbit valid hari ini).")
+                    except Exception:
+                        pass
 
-                if created_articles:
-                    st.session_state["latest_auto_article"] = created_articles[-1]
+                created_articles = []
+                failed_genres = []
+
+                if not genres_to_run:
+                    st.success("✅ Semua 4 genre untuk hari ini sudah terisi naskah valid! Tidak ada token API tambahan yang terpakai.")
                     auto_status.update(
-                        label=f"✅ Selesai! Berhasil memproduksi {len(created_articles)} artikel harian.",
+                        label="✅ Bank Naskah hari ini sudah lengkap (4/4 Genre valid).",
                         state="complete",
                         expanded=False
                     )
                 else:
-                    auto_status.update(label="Proses otomasi terhenti.", state="error")
+                    def _run_genre_once(g_item: str):
+                        def _ui_progress(stage: str, message: str, current_g=g_item):
+                            if stage in ("checker1_pass", "checker2_done", "complete"):
+                                st.success(f"[{current_g}] {message}")
+                            elif stage in ("checker1_revise", "recovery"):
+                                st.warning(f"[{current_g}] {message}")
+                            else:
+                                st.write(f"[{current_g}] {message}")
+
+                        return run_autonomous_daily_pipeline(
+                            preferred_genre=g_item,
+                            progress_callback=_ui_progress
+                        )
+
+                    for g_idx, g_item in enumerate(genres_to_run, 1):
+                        st.write(f"---\n**[{g_idx}/{len(genres_to_run)}] Memproses Genre:** `{g_item}`...")
+                        art_result = None
+                        last_err = None
+                        for attempt in range(1, 3):
+                            try:
+                                art_result = _run_genre_once(g_item)
+                                break
+                            except Exception as e:
+                                last_err = e
+                                if attempt == 1:
+                                    st.warning(f"⏳ `{g_item}` terkendala pada percobaan ke-1 ({str(e)[:140]}...). Menunggu 15 detik sebelum retry otomatis...")
+                                    time.sleep(15)
+
+                        if art_result is not None:
+                            created_articles.append(art_result)
+                        else:
+                            failed_genres.append(g_item)
+                            st.error(f"Gagal sementara pada genre '{g_item}': {last_err}")
+
+                        if g_idx < len(genres_to_run):
+                            st.caption("⏳ Jeda 10 detik antar genre untuk menjaga batas TPM API...")
+                            time.sleep(10)
+
+                    # Sweep Recovery Pass 1x untuk genre yang masih gagal akibat lonjakan burst TPM
+                    if failed_genres:
+                        st.warning(f"🔄 **Sweep Recovery Pass**: Menunggu 15 detik untuk mencoba ulang {len(failed_genres)} genre yang gagal ({', '.join(failed_genres)})...")
+                        time.sleep(15)
+                        still_failed = []
+                        for fg_item in failed_genres:
+                            try:
+                                art_rec = _run_genre_once(fg_item)
+                                created_articles.append(art_rec)
+                                st.success(f"✅ Sweep Recovery berhasil memulihkan genre `{fg_item}`!")
+                            except Exception as e_rec:
+                                still_failed.append(fg_item)
+                                st.error(f"❌ Gagal final pada genre '{fg_item}': {e_rec}")
+                        failed_genres = still_failed
+
+                    if created_articles and not failed_genres:
+                        st.session_state["latest_auto_article"] = created_articles[-1]
+                        auto_status.update(
+                            label=f"✅ Selesai! Berhasil memproduksi {len(created_articles)} artikel harian.",
+                            state="complete",
+                            expanded=False
+                        )
+                    elif created_articles and failed_genres:
+                        st.session_state["latest_auto_article"] = created_articles[-1]
+                        auto_status.update(
+                            label=f"⚠️ Selesai sebagian ({len(created_articles)} berhasil, gagal: {', '.join(failed_genres)}).",
+                            state="error",
+                            expanded=True
+                        )
+                    else:
+                        auto_status.update(label="❌ Proses otomasi terhenti.", state="error", expanded=True)
 
     st.divider()
 

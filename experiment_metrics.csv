@@ -13,3 +13,6 @@ Timestamp,Topic,Writer Model,Reviewer Model,Revisions,Passed,Writer Tokens,Revie
 2026-11-13 00:32:43,Situs Gunung Padang dan Kabupaten Cianjur,gemini/gemini-3.5-flash,groq/openai/gpt-oss-120b,3,False,8017,9385,0,394.09
 2026-11-13 00:33:01,Candi Borobudur dan Wangsa Syailendra,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,3,False,13013,14591,2242,351.41
 2026-11-13 00:34:56,Kebudayaan Dayak dan Kalimantan Tengah,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b,3,False,13776,13457,2031,166.39
+2026-11-15 23:59:08,Candi Prambanan dan Kabupaten Sleman,gemini/gemini-3.5-flash,groq/openai/gpt-oss-20b,3,False,10355,5045,1577,127.65
+2026-11-16 00:08:07,Candi Muara Takus,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,3,False,5339,7497,964,161.15
+2026-11-16 00:10:48,Kalimantan Tengah,groq/qwen/qwen3.8-27b,cohere/command-a-plus-05-2026,3,False,11003,18783,1088,150.27

@@ -331,14 +331,14 @@ ATURAN WAJIB:
    - "Sejarah & Misteri Lokal"
    - "Budaya & Fakta Unik"
 2. FILTER NIAT WISATA & LIFESTYLE: Prioritaskan sinyal tren yang memiliki daya tarik wisata, spot liburan/healing, kelezatan kuliner lokal, latar sejarah ikonik, atau keunikan budaya Nusantara. Hindari topik politik murni, hukum, atau seremoni birokrasi yang tidak relevan dengan traveler.
-3. KETERSEDIAAN ENSIKLOPEDIA: Pastikan nilai `topic` berupa 1 atau 2 entitas spesifik di Indonesia yang PASTI memiliki halaman di Wikipedia Bahasa Indonesia (contoh format `topic`: "Kawah Ijen dan Banyuwangi", "Rendang dan Masakan Padang", "Lawang Sewu dan Kota Semarang", "Suku Baduy dan Kabupaten Lebak"). Jangan gunakan kalimat panjang pada `topic` agar mesin pencari database vektor & Wikipedia bekerja optimal.
+3. KETERSEDIAAN ENSIKLOPEDIA: Pastikan nilai `topic` berupa **1 entitas spesifik tunggal** di Indonesia yang PASTI memiliki halaman utama di Wikipedia Bahasa Indonesia (contoh format `topic`: "Kawah Ijen", "Rendang", "Candi Prambanan", "Lawang Sewu", "Suku Baduy"). HINDARI menggabungkan dua entitas dengan kata "dan" (seperti "Candi X dan Kabupaten Y") karena membuat mesin pencari konteks kesulitan menemukan artikel tunggal yang memuat kedua entitas sekaligus dan memicu kegagalan review. Jika ingin membahas konteks daerahnya, masukkan daerah tersebut ke dalam `target_title` dan `editorial_angle`, bukan ke dalam field `topic`.
 4. HINDARI DUPLIKASI: Jangan memilih topik yang sudah ada di daftar TOPIK YANG SUDAH DITULIS.
 5. OUTPUT WAJIB berupa JSON murni (tanpa teks pembuka/penutup) dengan struktur persis berikut:
 {
   "genre": "Nama Genre Resmi",
   "trending_keyword": "Kata kunci atau berita tren yang memicu pemilihan topik ini",
   "trend_source": "Google Trends ID / Google News ID",
-  "topic": "Entitas1 dan Entitas2",
+  "topic": "1 Entitas Utama Wikipedia Indonesia (tanpa kata 'dan')",
   "target_title": "Judul Artikel Jurnalistik Travelista yang Menarik dan SEO-Friendly",
   "editorial_angle": "2-3 kalimat arahan sudut pandang pembahasan artikel"
 }"""
