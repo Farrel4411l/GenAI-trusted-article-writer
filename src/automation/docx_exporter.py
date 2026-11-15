@@ -42,23 +42,28 @@ def build_article_docx(doc: Document, article: Dict[str, Any], is_first: bool = 
         doc.add_page_break()
 
     title = article.get("final_title") or article.get("target_title") or article.get("topic") or "Artikel Editorial Travelista"
-    genre = article.get("genre", "Umum")
+    genre = article.get("genre") or "Umum"
     run_date = article.get("run_date") or article.get("created_at") or "-"
-    topic = article.get("topic", "-")
-    trend_kw = article.get("trending_keyword", "-")
-    trend_src = article.get("trend_source", "Google Trends")
-    writer_model = article.get("writer_model", "Gemini 3.5 Flash")
-    reviewer_model = article.get("reviewer_model", "GPT-OSS 120B (Groq)")
-    checker2_score = article.get("final_check_score", 95)
-    audit_notes = article.get("final_check_notes", "Format dan fakta lolos audit redaksi.")
+    topic = article.get("topic") or "-"
+    trend_kw = article.get("trending_keyword") or "-"
+    trend_src = article.get("trend_source") or "Google Trends"
+    writer_model = article.get("writer_model") or "Gemini 3.5 Flash"
+    reviewer_model = article.get("reviewer_model") or "GPT-OSS 120B (Groq)"
+    checker2_score = article.get("final_check_score") if article.get("final_check_score") is not None else 95
+    audit_notes = article.get("final_check_notes") or "Format dan fakta lolos audit redaksi."
     cover_url = article.get("cover_image_url") or ""
     cover_alt = article.get("cover_image_alt") or ""
     article_md = article.get("article_markdown") or ""
 
-    meta_title = article.get("meta_title") or article.get("cms_payload", {}).get("article", {}).get("meta_title") or title[:60]
-    excerpt = article.get("excerpt") or article.get("cms_payload", {}).get("article", {}).get("excerpt") or article.get("meta_description") or ""
-    seo_score = article.get("seo_score") or article.get("cms_payload", {}).get("seo_audit", {}).get("seo_score", 92)
-    search_intent = article.get("cms_payload", {}).get("seo_audit", {}).get("search_intent") or "Wisata & Eksplorasi"
+    cms_payload = article.get("cms_payload") or {}
+    cms_article = cms_payload.get("article") or {}
+    cms_seo = cms_payload.get("seo_audit") or {}
+
+    meta_title = article.get("meta_title") or cms_article.get("meta_title") or title[:60]
+    excerpt = article.get("excerpt") or cms_article.get("excerpt") or article.get("meta_description") or ""
+    seo_score_raw = article.get("seo_score")
+    seo_score = seo_score_raw if seo_score_raw is not None else cms_seo.get("seo_score", 92)
+    search_intent = cms_seo.get("search_intent") or "Wisata & Eksplorasi"
 
     # Header / Kategori Badge
     p_badge = doc.add_paragraph()

@@ -259,9 +259,9 @@ with tab_manual:
                         try:
                             manual_slug = "cover-" + str(int(time.time()))
                             first_line = final_state.get("draft", "").split("\n")[0].replace("#", "").strip()
-                            m_title = first_line if first_line else user_query
+                            m_title = first_line if first_line else topic
                             img_res = acquire_cover_image(
-                                topic=user_query,
+                                topic=topic,
                                 title=m_title,
                                 genre="Wisata & Destinasi",
                                 slug=manual_slug,
@@ -545,12 +545,17 @@ with tab_auto:
             format_func=lambda idx: article_labels[idx]
         )
         active_art = saved_articles[selected_idx]
+        article_md_text = active_art.get("article_markdown") or ""
+        slug_name = active_art.get("slug") or "artikel-travelista"
+        cms_data = active_art.get("cms_payload") or {}
+        cms_article = cms_data.get("article") or {}
+        cms_seo = cms_data.get("seo_audit") or {}
 
         # Kartu Metadata & Status 2 Checker
         with st.container(border=True):
-            st.markdown(f"#### {active_art.get('final_title', '')}")
+            st.markdown(f"#### {active_art.get('final_title') or ''}")
             mcol1, mcol2, mcol3, mcol4, mcol5 = st.columns(5)
-            mcol1.metric("📂 Genre", active_art.get("genre", "-").split(" (")[0])
+            mcol1.metric("📂 Genre", (active_art.get("genre") or "-").split(" (")[0])
             mcol2.metric(
                 "🕵️‍♂️ Checker 1 (Sumber)",
                 "LULUS" if active_art.get("fact_check_passed") else "Catatan",
@@ -561,7 +566,8 @@ with tab_auto:
                 f"{active_art.get('final_check_score', 100)}/100",
                 delta="Siap Terbit" if active_art.get("final_check_passed") else "Perlu Cek"
             )
-            seo_sc = active_art.get("seo_score") or active_art.get("cms_payload", {}).get("seo_audit", {}).get("seo_score", 92)
+            seo_sc_raw = active_art.get("seo_score")
+            seo_sc = seo_sc_raw if seo_sc_raw is not None else cms_seo.get("seo_score", 92)
             mcol4.metric(
                 "🎯 SEO On-Page",
                 f"{seo_sc}/100",
@@ -578,14 +584,15 @@ with tab_auto:
             )
 
             # Pratinjau Tampilan Google SERP & AI Overview
-            meta_t = active_art.get("meta_title") or active_art.get("cms_payload", {}).get("article", {}).get("meta_title") or active_art.get("final_title", "")[:60]
-            exc_t = active_art.get("excerpt") or active_art.get("cms_payload", {}).get("article", {}).get("excerpt") or active_art.get("meta_description", "")
+            meta_t = active_art.get("meta_title") or cms_article.get("meta_title") or (active_art.get("final_title") or "")[:60]
+            exc_t = active_art.get("excerpt") or cms_article.get("excerpt") or active_art.get("meta_description") or ""
             meta_d = active_art.get("meta_description") or ""
+            genre_slug = (active_art.get("genre") or "destinasi").lower().split(" ")[0]
             with st.expander("🔍 Pratinjau Tampilan di Google (SERP & AI Overview)", expanded=False):
                 st.markdown("**🌐 Google SERP Preview (Peringkat #1 Target):**")
                 st.markdown(
                     f"<div style='background-color:#ffffff; color:#202124; padding:12px; border-radius:8px; border:1px solid #dfe1e5; margin-bottom:10px;'>"
-                    f"<div style='font-size:12px; color:#202124;'>https://travelista.id › {active_art.get('genre', 'destinasi').lower().split(' ')[0]} › {slug_name}</div>"
+                    f"<div style='font-size:12px; color:#202124;'>https://travelista.id › {genre_slug} › {slug_name}</div>"
                     f"<div style='font-size:18px; color:#1a0dab; font-weight:500; text-decoration:underline; cursor:pointer;'>{meta_t}</div>"
                     f"<div style='font-size:13px; color:#4d5156; margin-top:4px;'>{meta_d}</div>"
                     f"</div>",
@@ -595,19 +602,15 @@ with tab_auto:
                     st.markdown("**🤖 Google AI Overview (Speakable Direct Answer):**")
                     st.info(f"💡 *\"{exc_t}\"*")
 
-                seo_aud = active_art.get("cms_payload", {}).get("seo_audit", {})
-                if seo_aud.get("checks"):
+                if cms_seo.get("checks"):
                     st.markdown("**📋 Checklist Evaluasi On-Page SEO:**")
-                    st.markdown("\n".join([f"- {c}" for c in seo_aud["checks"]]))
+                    st.markdown("\n".join([f"- {c}" for c in cms_seo["checks"]]))
 
         subtab_copy, subtab_preview, subtab_cms = st.tabs([
             "📋 Mode Tinggal Copas (1-Klik Copy)",
             "👁️ Pratinjau Tampilan Artikel",
             "🔌 Payload JSON (Siap Auto-Deploy CMS)"
         ])
-
-        article_md_text = active_art.get("article_markdown", "")
-        slug_name = active_art.get("slug", "artikel-travelista")
 
         with subtab_copy:
             st.caption("💡 Klik ikon **Copy (📋)** di pojok kanan atas kotak di bawah ini untuk menyalin seluruh artikel secara utuh:")
@@ -656,13 +659,14 @@ with tab_auto:
                     )
 
         with subtab_preview:
-            auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
-            auto_cover_alt = active_art.get("cover_image_alt") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_alt") or ""
-            img_meta = active_art.get("cover_image_meta") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_meta", {})
+            auto_cover_url = active_art.get("cover_image_url") or cms_article.get("cover_image_url")
+            auto_cover_alt = active_art.get("cover_image_alt") or cms_article.get("cover_image_alt") or ""
+            img_meta = active_art.get("cover_image_meta") or cms_article.get("cover_image_meta") or {}
             source_badge = img_meta.get("source_type", "16:9 WebP")
             if auto_cover_url:
                 st.image(auto_cover_url, caption=f"🖼️ Cover Image ({source_badge}): {auto_cover_alt}", use_container_width=True)
-                v_audit = img_meta.get("vision_audit") or active_art.get("cms_payload", {}).get("verification", {}).get("stage3_vision_reviewer", {})
+                cms_verif = cms_data.get("verification") or {}
+                v_audit = img_meta.get("vision_audit") or cms_verif.get("stage3_vision_reviewer") or {}
                 if v_audit:
                     v_score = v_audit.get("score", 90)
                     v_pass = v_audit.get("is_passed", True)
@@ -701,11 +705,10 @@ with tab_auto:
         with subtab_cms:
             st.caption("Skema standar JSON ini telah terverifikasi oleh Checker Akhir dan 100% kompatibel dengan monorepo **Travelista 2026** (Next.js CMS, Nuxt Magazine, Supabase `articles`):")
             
-            cms_data = active_art.get("cms_payload", {})
-            travelista_data = cms_data.get("travelista_payload", {})
-            cat_info = travelista_data.get("category", {})
-            tags_info = travelista_data.get("tags", [])
-            author_info = travelista_data.get("author", {})
+            travelista_data = cms_data.get("travelista_payload") or {}
+            cat_info = travelista_data.get("category") or {}
+            tags_info = travelista_data.get("tags") or []
+            author_info = travelista_data.get("author") or {}
 
             # Kartu info keselarasan Travelista
             c1, c2, c3 = st.columns(3)
@@ -718,10 +721,11 @@ with tab_auto:
                 st.markdown(f"🔖 **Tags Terformat**: `{tag_preview or '-'}`")
                 st.markdown(f"📝 **Status Target**: `review (Siap Review Redaksi)`")
             with c3:
-                auto_cover_url = active_art.get("cover_image_url") or active_art.get("cms_payload", {}).get("article", {}).get("cover_image_url")
+                auto_cover_url = active_art.get("cover_image_url") or cms_article.get("cover_image_url")
                 if auto_cover_url:
-                    source_label = active_art.get("cover_image_meta", {}).get("source_type", "Ready")
-                    v_audit = active_art.get("cover_image_meta", {}).get("vision_audit", {})
+                    cov_meta = active_art.get("cover_image_meta") or cms_article.get("cover_image_meta") or {}
+                    source_label = cov_meta.get("source_type", "Ready")
+                    v_audit = cov_meta.get("vision_audit") or {}
                     v_score = v_audit.get("score", 90) if v_audit else 90
                     st.markdown(f"🖼️ **Cover Image**: `16:9 WebP ({source_label})` | Vision: `{v_score}/100`")
                 else:
@@ -735,7 +739,7 @@ with tab_auto:
             with view_cms_tab:
                 st.json(cms_data)
             with view_html_tab:
-                html_code = travelista_data.get("articles_record", {}).get("content_html") or cms_data.get("article", {}).get("content_html", "")
+                html_code = (travelista_data.get("articles_record") or {}).get("content_html") or cms_article.get("content_html", "")
                 st.code(html_code, language="html")
 
             st.download_button(

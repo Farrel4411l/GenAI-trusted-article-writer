@@ -187,6 +187,10 @@ def main():
         print(f"   Skor  : {r.get('final_check_score')}/100 | Waktu: {r.get('total_latency')}s")
     print("=================================================================")
 
+    if len(results) == 0:
+        print("❌ GAGAL TOTAL: 0 artikel berhasil diproduksi. Keluar dengan exit code 1 agar alert sistem aktif.")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

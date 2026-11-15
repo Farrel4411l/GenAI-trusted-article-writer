@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.agents.llm_factory import get_llm
 from src.agents.writer_agent import deduplicate_references
