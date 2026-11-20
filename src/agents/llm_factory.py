@@ -70,7 +70,9 @@ def _build_raw_llm(
     temp = 0.7 if temperature is None else temperature
 
     if provider == "groq":
-        default_groq_max = 800 if "qwen" in model_name.lower() else 1000
+        # Model reasoning (GPT-OSS / Qwen) memakai token untuk reasoning/think sebelum naskah;
+        # batas 800-1000 sebelumnya memotong artikel di tengah kalimat dan menghilangkan Sumber Referensi.
+        default_groq_max = 2800 if "qwen" in model_name.lower() else 2600
         effective_max = max_tokens if max_tokens is not None else default_groq_max
         return ChatGroq(
             temperature=temp,

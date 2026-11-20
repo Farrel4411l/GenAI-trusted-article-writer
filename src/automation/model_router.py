@@ -15,79 +15,79 @@ GENRE_MODEL_PREFERENCES: Dict[str, Dict[str, List[str]]] = {
     "Wisata & Destinasi (Travel)": {
         "writer": [
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
-            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
-            "groq/openai/gpt-oss-120b",
             "cohere/command-a-plus-05-2026",
+            "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "groq/qwen/qwen3.8-27b",
         ],
         "rationale": (
-            "Genre Wisata & Destinasi membutuhkan narasi panjang 5-8 paragraf yang utuh tanpa "
-            "pemotongan token output (dipilih Gemini 3.5 Flash sebagai Writer+Grader) dan "
-            "diverifikasi silang oleh GPT-OSS 120B (Groq) / Command A+ (Cohere) sebagai Fact-Checker."
+            "Genre Wisata & Destinasi membutuhkan narasi bahasa Indonesia panjang 5-8 paragraf yang utuh "
+            "(dipilih Gemini 3.5 Flash / Command A+ Cohere sebagai Writer+Grader) dan "
+            "diverifikasi silang oleh Command A+ (Cohere) / GPT-OSS 120B (Groq) sebagai Fact-Checker."
         ),
     },
     "Kuliner Nusantara": {
         "writer": [
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
-            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "groq/qwen/qwen3.8-27b",
         ],
         "rationale": (
             "Genre Kuliner Nusantara menuntut deskripsi mendalam 5-8 paragraf beserta sitasi lengkap "
-            "(Gemini 3.5 Flash sebagai Writer+Grader) dengan evaluasi lintas-model oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
+            "(Gemini 3.5 Flash / Command A+ Cohere sebagai Writer+Grader) dengan evaluasi lintas-model oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
         ),
     },
     "Sejarah & Misteri Lokal": {
         "writer": [
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
-            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
-            "groq/openai/gpt-oss-120b",
             "cohere/command-a-plus-05-2026",
+            "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "groq/qwen/qwen3.8-27b",
         ],
         "rationale": (
             "Genre Sejarah & Misteri Lokal padat akan angka tahun, nama tokoh, dan kronologi "
-            "sehingga menggunakan Gemini 3.5 Flash (konteks luas untuk sintesis multi-dokumen & Grader) "
-            "serta GPT-OSS 120B (Groq) / Command A+ (Cohere) sebagai Fact-Checker berpenalaran tinggi."
+            "sehingga menggunakan Gemini 3.5 Flash / Command A+ Cohere sebagai Writer "
+            "serta Command A+ (Cohere) / GPT-OSS 120B (Groq) secara lintas-model sebagai Fact-Checker."
         ),
     },
     "Budaya & Fakta Unik": {
         "writer": [
             "gemini/gemini-3.5-flash",
+            "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/qwen/qwen3.8-27b",
-            "cohere/command-a-plus-05-2026",
         ],
         "reviewer": [
             "cohere/command-a-plus-05-2026",
             "groq/openai/gpt-oss-120b",
             "groq/openai/gpt-oss-20b",
-            "groq/qwen/qwen3.8-27b",
             "gemini/gemini-3.5-flash",
+            "groq/qwen/qwen3.8-27b",
         ],
         "rationale": (
-            "Genre Budaya & Fakta Unik memerlukan sintesis lintas-sumber yang presisi "
-            "(Gemini 3.5 Flash sebagai Writer+Grader) dan verifikasi fakta oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
+            "Genre Budaya & Fakta Unik memerlukan sintesis lintas-sumber bahasa Indonesia yang bersih "
+            "(Gemini 3.5 Flash / Command A+ Cohere sebagai Writer) dan verifikasi fakta lintas-model oleh Command A+ (Cohere, 40K TPM) / GPT-OSS 120B (Groq)."
         ),
     },
 }
@@ -176,7 +176,8 @@ def select_optimal_models(
     Juga mengutamakan Cross-Model Pairing (Writer != Reviewer) untuk mencegah bias evaluasi.
     """
     if stats is None:
-        stats = get_model_usage_stats("experiment_metrics.csv", filter_today=False)
+        # Gunakan kuota harian agar reset API setiap hari tercermin akurat di router
+        stats = get_model_usage_stats("experiment_metrics.csv", filter_today=True)
 
     prefs = GENRE_MODEL_PREFERENCES.get(
         genre,

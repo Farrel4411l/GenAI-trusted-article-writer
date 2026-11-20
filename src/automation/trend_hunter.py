@@ -25,57 +25,93 @@ GENRE_RSS_QUERIES = {
     "Budaya & Fakta Unik": "tradisi+budaya+adat+indonesia+when:30d",
 }
 
-# Pool Topik Nusantara Kaya Referensi (Sebagai penyeimbang & jaminan ketersediaan fakta di Wikipedia ID)
+# Pool Topik Nusantara Kaya Referensi (1 Entitas Spesifik Tunggal agar RAG & Foto Wikimedia 100% Akurat)
 CURATED_EVERGREEN_POOL = {
     "Wisata & Destinasi (Travel)": [
-        {"keyword": "Labuan Bajo & Pulau Komodo", "topic": "Taman Nasional Komodo dan Labuan Bajo"},
-        {"keyword": "Kawah Ijen Blue Fire", "topic": "Kawah Ijen dan Banyuwangi"},
-        {"keyword": "Raja Ampat Papua", "topic": "Kepulauan Raja Ampat dan Sorong"},
-        {"keyword": "Danau Toba & Samosir", "topic": "Danau Toba dan Pulau Samosir"},
-        {"keyword": "Gunung Bromo Tengger", "topic": "Gunung Bromo dan Taman Nasional Bromo Tengger Semeru"},
-        {"keyword": "Nusa Penida Bali", "topic": "Nusa Penida dan Pariwisata di Bali"},
-        {"keyword": "Taman Nasional Tanjung Puting", "topic": "Taman Nasional Tanjung Puting dan Kalimantan Tengah"},
-        {"keyword": "Gunung Rinjani & Segara Anak", "topic": "Gunung Rinjani dan Pulau Lombok"},
-        {"keyword": "Kepulauan Banda Neira", "topic": "Banda Neira dan Kepulauan Banda"},
-        {"keyword": "Taman Nasional Wakatobi", "topic": "Taman Nasional Wakatobi dan Sulawesi Tenggara"},
+        {"keyword": "Labuan Bajo & Pulau Komodo", "topic": "Taman Nasional Komodo"},
+        {"keyword": "Kawah Ijen Blue Fire", "topic": "Kawah Ijen"},
+        {"keyword": "Raja Ampat Papua", "topic": "Kepulauan Raja Ampat"},
+        {"keyword": "Danau Toba & Samosir", "topic": "Danau Toba"},
+        {"keyword": "Gunung Bromo Tengger", "topic": "Gunung Bromo"},
+        {"keyword": "Nusa Penida Bali", "topic": "Nusa Penida"},
+        {"keyword": "Taman Nasional Tanjung Puting", "topic": "Taman Nasional Tanjung Puting"},
+        {"keyword": "Gunung Rinjani & Segara Anak", "topic": "Gunung Rinjani"},
+        {"keyword": "Kepulauan Banda Neira", "topic": "Banda Neira"},
+        {"keyword": "Taman Nasional Wakatobi", "topic": "Taman Nasional Wakatobi"},
+        {"keyword": "Dataran Tinggi Dieng", "topic": "Dataran Tinggi Dieng"},
+        {"keyword": "Masjid Agung Jawa Tengah", "topic": "Masjid Agung Jawa Tengah"},
     ],
     "Kuliner Nusantara": [
-        {"keyword": "Rendang & Masakan Minang", "topic": "Rendang dan Masakan Padang"},
-        {"keyword": "Pempek & Cuko Palembang", "topic": "Pempek dan Masakan Palembang"},
-        {"keyword": "Gudeg Nangka Yogyakarta", "topic": "Gudeg dan Yogyakarta"},
-        {"keyword": "Rawon Hitam Jawa Timur", "topic": "Rawon dan Surabaya"},
-        {"keyword": "Sate Lilit & Kuliner Bali", "topic": "Sate Lilit dan Masakan Bali"},
-        {"keyword": "Coto Makassar & Konro", "topic": "Coto Makassar dan Makassar"},
-        {"keyword": "Papeda & Kuliner Maluku Papua", "topic": "Papeda dan Sagu"},
-        {"keyword": "Soto Lamongan & Soto Nusantara", "topic": "Soto (makanan) dan Kabupaten Lamongan"},
-        {"keyword": "Kopi Luwak & Kopi Gayo", "topic": "Kopi luwak dan Kopi Gayo"},
-        {"keyword": "Ayam Betutu Gilimanuk", "topic": "Ayam betutu dan Masakan Bali"},
+        {"keyword": "Rendang Minangkabau", "topic": "Rendang"},
+        {"keyword": "Pempek Palembang", "topic": "Pempek"},
+        {"keyword": "Gudeg Yogyakarta", "topic": "Gudeg"},
+        {"keyword": "Rawon Jawa Timur", "topic": "Rawon"},
+        {"keyword": "Sate Lilit Bali", "topic": "Sate lilit"},
+        {"keyword": "Coto Makassar", "topic": "Coto Makassar"},
+        {"keyword": "Papeda Maluku Papua", "topic": "Papeda"},
+        {"keyword": "Soto Lamongan", "topic": "Soto Lamongan"},
+        {"keyword": "Kopi Gayo Aceh", "topic": "Kopi Gayo"},
+        {"keyword": "Ayam Betutu Bali", "topic": "Ayam betutu"},
+        {"keyword": "Nasi Goreng Nusantara", "topic": "Nasi goreng"},
+        {"keyword": "Bakso Malang", "topic": "Bakso"},
     ],
     "Sejarah & Misteri Lokal": [
-        {"keyword": "Misteri & Sejarah Lawang Sewu", "topic": "Lawang Sewu dan Kota Semarang"},
-        {"keyword": "Hutan Alas Purwo Banyuwangi", "topic": "Taman Nasional Alas Purwo dan Blambangan"},
-        {"keyword": "Sejarah Candi Borobudur", "topic": "Candi Borobudur dan Wangsa Syailendra"},
-        {"keyword": "Benteng Vredeburg & Kolonial Yogya", "topic": "Museum Benteng Vredeburg dan Kesultanan Ngayogyakarta Hadiningrat"},
-        {"keyword": "Gunung Merapi & Petilasan Keraton", "topic": "Gunung Merapi dan Kesultanan Mataram"},
-        {"keyword": "Situs Megalitikum Gunung Padang", "topic": "Situs Gunung Padang dan Kabupaten Cianjur"},
-        {"keyword": "Candi Prambanan & Legenda Roro Jonggrang", "topic": "Candi Prambanan dan Rara Jonggrang"},
-        {"keyword": "Istana Maimun & Kesultanan Deli", "topic": "Istana Maimun dan Kesultanan Deli"},
-        {"keyword": "Kerajaan Majapahit di Trowulan", "topic": "Majapahit dan Trowulan, Mojokerto"},
-        {"keyword": "Benteng Rotterdam Makassar", "topic": "Benteng Rotterdam dan Kerajaan Gowa"},
+        {"keyword": "Misteri & Sejarah Lawang Sewu", "topic": "Lawang Sewu"},
+        {"keyword": "Hutan Alas Purwo Banyuwangi", "topic": "Taman Nasional Alas Purwo"},
+        {"keyword": "Sejarah Candi Borobudur", "topic": "Candi Borobudur"},
+        {"keyword": "Benteng Vredeburg Yogyakarta", "topic": "Museum Benteng Vredeburg"},
+        {"keyword": "Candi Plaosan Klaten", "topic": "Candi Plaosan"},
+        {"keyword": "Situs Megalitikum Gunung Padang", "topic": "Situs Gunung Padang"},
+        {"keyword": "Candi Prambanan & Legenda Roro Jonggrang", "topic": "Candi Prambanan"},
+        {"keyword": "Istana Maimun Medan", "topic": "Istana Maimun"},
+        {"keyword": "Kerajaan Majapahit Trowulan", "topic": "Trowulan"},
+        {"keyword": "Benteng Rotterdam Makassar", "topic": "Benteng Rotterdam"},
+        {"keyword": "Candi Muara Takus Riau", "topic": "Candi Muara Takus"},
+        {"keyword": "Benteng Pendem Cilacap", "topic": "Benteng Pendem Cilacap"},
     ],
     "Budaya & Fakta Unik": [
-        {"keyword": "Kehidupan Suku Baduy Dalam", "topic": "Suku Baduy dan Kabupaten Lebak"},
-        {"keyword": "Desa Adat Wae Rebo Flores", "topic": "Wae Rebo dan Kabupaten Manggarai"},
-        {"keyword": "Tradisi Rambu Solo Tana Toraja", "topic": "Tana Toraja dan Suku Toraja"},
-        {"keyword": "Filosofi Batik & Warisan UNESCO", "topic": "Batik dan Budaya Jawa"},
-        {"keyword": "Seni Pertunjukan Wayang Kulit", "topic": "Wayang kulit dan Gamelan"},
-        {"keyword": "Tari Kecak Uluwatu Bali", "topic": "Tari Kecak dan Pura Luhur Uluwatu"},
-        {"keyword": "Alat Musik Angklung Sunda", "topic": "Angklung dan Budaya Sunda"},
-        {"keyword": "Tradisi Lompat Batu Nias (Fahombo)", "topic": "Lompat batu Nias dan Pulau Nias"},
-        {"keyword": "Kapal Pinisi Bulukumba", "topic": "Pinisi dan Kabupaten Bulukumba"},
-        {"keyword": "Subak Sistem Irigasi Bali", "topic": "Subak dan Budaya Bali"},
+        {"keyword": "Kehidupan Suku Baduy Dalam", "topic": "Suku Baduy"},
+        {"keyword": "Desa Adat Wae Rebo Flores", "topic": "Wae Rebo"},
+        {"keyword": "Tradisi Rambu Solo Tana Toraja", "topic": "Suku Toraja"},
+        {"keyword": "Filosofi Batik Warisan UNESCO", "topic": "Batik"},
+        {"keyword": "Seni Pertunjukan Wayang Kulit", "topic": "Wayang kulit"},
+        {"keyword": "Tari Kecak Uluwatu Bali", "topic": "Tari Kecak"},
+        {"keyword": "Alat Musik Angklung Sunda", "topic": "Angklung"},
+        {"keyword": "Tradisi Lompat Batu Nias", "topic": "Lompat batu Nias"},
+        {"keyword": "Kapal Pinisi Bulukumba", "topic": "Pinisi"},
+        {"keyword": "Subak Sistem Irigasi Bali", "topic": "Subak"},
+        {"keyword": "Rumah Betang Kalimantan", "topic": "Rumah Betang"},
+        {"keyword": "Tradisi Tabuik Pariaman", "topic": "Tabuik"},
     ],
 }
+
+# Daftar topik yang terlalu luas/administratif/korporasi (memicu isi berita kriminal/birokrasi/kecelakaan, bukan wisata)
+_OVERBROAD_OR_OFFBRAND_PATTERNS = (
+    r"^indonesia$",
+    r"^jawa\s+(?:barat|tengah|timur)$",
+    r"^kalimantan\s+(?:barat|tengah|selatan|timur|utara)$",
+    r"^sumatera\s+(?:utara|barat|selatan)$",
+    r"^sulawesi\s+(?:utara|tengah|selatan|tenggara)$",
+    r"^papua$",
+    r"^(?:kabupaten|kota|provinsi)\s+",
+    r"^cilacap$",
+    r"^pariaman$",
+    r"^pati$",
+    r"^garuda\s+indonesia$",
+    r"^lion\s+air$",
+    r"^kereta\s+api\s+indonesia$",
+    r"^pertamina$",
+    r"^dpr(?:d)?\b",
+    r"^kpk\b",
+)
+
+
+def is_overbroad_or_unsuitable_topic(topic: str) -> bool:
+    """Memastikan topik bukan nama negara, provinsi, kabupaten/kota umum, atau maskapai/korporasi."""
+    cleaned = re.sub(r"\s+", " ", (topic or "").strip().lower())
+    if not cleaned or len(cleaned) < 3:
+        return True
+    return any(re.match(pat, cleaned, flags=re.IGNORECASE) for pat in _OVERBROAD_OR_OFFBRAND_PATTERNS)
 
 
 def fetch_google_trends_id(max_items: int = 10) -> List[Dict[str, str]]:
@@ -288,7 +324,7 @@ def analyze_and_select_daily_topic(
 ) -> Dict[str, Any]:
     from src.automation.model_router import is_gemini_quota_exhausted
     if not planner_model_id:
-        planner_model_id = "groq/openai/gpt-oss-120b" if is_gemini_quota_exhausted() else "gemini/gemini-3.5-flash"
+        planner_model_id = "cohere/command-a-plus-05-2026" if is_gemini_quota_exhausted() else "gemini/gemini-3.5-flash"
     """
     Menganalisis sinyal tren pencarian hari ini dan menentukan:
     1. Genre Terbaik (dari 4 genre Travelista)
@@ -318,7 +354,7 @@ def analyze_and_select_daily_topic(
         f"- [{s['source']}] {s['title']}" for s in live_signals[:20]
     ) or "- Tren Wisata Alam, Kuliner Tradisional, Sejarah & Budaya Nusantara"
 
-    recent_text = ", ".join(recent_topics[:15]) if recent_topics else "Belum ada"
+    recent_text = ", ".join(recent_topics[:30]) if recent_topics else "Belum ada"
     allowed_genres_str = preferred_genre if preferred_genre in TRAVELISTA_GENRES else ", ".join(TRAVELISTA_GENRES)
 
     system_prompt = """Anda adalah *Chief Trend Analyst & Editorial Planner* untuk portal media "Travelista.id".
@@ -330,17 +366,21 @@ ATURAN WAJIB:
    - "Kuliner Nusantara"
    - "Sejarah & Misteri Lokal"
    - "Budaya & Fakta Unik"
-2. FILTER NIAT WISATA & LIFESTYLE: Prioritaskan sinyal tren yang memiliki daya tarik wisata, spot liburan/healing, kelezatan kuliner lokal, latar sejarah ikonik, atau keunikan budaya Nusantara. Hindari topik politik murni, hukum, atau seremoni birokrasi yang tidak relevan dengan traveler.
-3. KETERSEDIAAN ENSIKLOPEDIA: Pastikan nilai `topic` berupa **1 entitas spesifik tunggal** di Indonesia yang PASTI memiliki halaman utama di Wikipedia Bahasa Indonesia (contoh format `topic`: "Kawah Ijen", "Rendang", "Candi Prambanan", "Lawang Sewu", "Suku Baduy"). HINDARI menggabungkan dua entitas dengan kata "dan" (seperti "Candi X dan Kabupaten Y") karena membuat mesin pencari konteks kesulitan menemukan artikel tunggal yang memuat kedua entitas sekaligus dan memicu kegagalan review. Jika ingin membahas konteks daerahnya, masukkan daerah tersebut ke dalam `target_title` dan `editorial_angle`, bukan ke dalam field `topic`.
-4. HINDARI DUPLIKASI: Jangan memilih topik yang sudah ada di daftar TOPIK YANG SUDAH DITULIS.
-5. OUTPUT WAJIB berupa JSON murni (tanpa teks pembuka/penutup) dengan struktur persis berikut:
+2. FILTER NIAT WISATA & LIFESTYLE: Prioritaskan sinyal tren yang mengarah pada objek wisata, hidangan kuliner spesifik, candi/situs sejarah, atau tradisi budaya nyata Nusantara. Hindari topik politik, korupsi/OTT, hukum, kecelakaan, atau seremoni birokrasi.
+3. KETERSEDIAAN ENSIKLOPEDIA & LARANGAN TOPIK TERLALU LUAS:
+   - Nilai `topic` WAJIB berupa **1 entitas destinasi, hidangan, situs bersejarah, atau tradisi budaya SPESIFIK** yang memiliki halaman khusus di Wikipedia Bahasa Indonesia (contoh BAIK: "Kawah Ijen", "Rendang", "Candi Prambanan", "Candi Plaosan", "Lawang Sewu", "Suku Baduy", "Rumah Betang", "Tradisi Tabuik").
+   - DILARANG KERAS memilih nama negara ("Indonesia"), nama provinsi ("Jawa Tengah", "Kalimantan Tengah"), nama kabupaten/kota administratif umum ("Cilacap", "Kabupaten Pati", "Kota Pariaman"), atau nama maskapai/korporasi ("Garuda Indonesia") sebagai `topic`, karena halaman Wikipedia administratif/perusahaan didominasi daftar kecamatan, statistik birokrasi, kasus hukum, atau berita kecelakaan!
+   - HINDARI menggabungkan dua entitas dengan kata "dan" (seperti "Candi X dan Kabupaten Y").
+4. KESELARASAN JUDUL & ISI (ANTI-DIPAKSAKAN): Gunakan berita tren sebagai *inspirasi tema abadi (evergreen)*, BUKAN memaksakan klaim angka peringkat 2026 atau peristiwa seremonial kemarin masuk ke judul utama apabila fakta tersebut tidak tersedia di ensiklopedia Wikipedia. Gunakan Bahasa Indonesia jurnalistik yang alami tanpa mencampur bahasa asing yang tidak perlu.
+5. HINDARI DUPLIKASI: Jangan memilih topik yang sudah ada di daftar TOPIK YANG SUDAH DITULIS.
+6. OUTPUT WAJIB berupa JSON murni (tanpa teks pembuka/penutup) dengan struktur persis berikut:
 {
   "genre": "Nama Genre Resmi",
   "trending_keyword": "Kata kunci atau berita tren yang memicu pemilihan topik ini",
   "trend_source": "Google Trends ID / Google News ID",
-  "topic": "1 Entitas Utama Wikipedia Indonesia (tanpa kata 'dan')",
-  "target_title": "Judul Artikel Jurnalistik Travelista yang Menarik dan SEO-Friendly",
-  "editorial_angle": "2-3 kalimat arahan sudut pandang pembahasan artikel"
+  "topic": "1 Entitas Spesifik Wikipedia Indonesia (bukan nama provinsi/kabupaten/negara/maskapai)",
+  "target_title": "Judul Artikel Jurnalistik Travelista yang Menarik, Nyata, dan SEO-Friendly",
+  "editorial_angle": "2-3 kalimat arahan sudut pandang pembahasan artikel sesuai fakta wisata/kuliner/sejarah/budaya"
 }"""
 
     user_prompt = f"""TANGGAL HARI INI: {datetime.now().strftime('%Y-%m-%d')}
@@ -375,7 +415,19 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
             if genre not in TRAVELISTA_GENRES:
                 genre = preferred_genre if preferred_genre in TRAVELISTA_GENRES else TRAVELISTA_GENRES[0]
             topic = parsed.get("topic", "").strip()
+            # Bersihkan topik majemuk jika LLM masih menyisipkan ' dan '
+            topic = re.split(r"\s+(?:dan|serta|atau)\s+|[,&/]", topic, maxsplit=1, flags=re.IGNORECASE)[0].strip()
             target_title = parsed.get("target_title", "").strip()
+            if is_overbroad_or_unsuitable_topic(topic):
+                print(f"[Trend Hunter] Topik '{topic}' terlalu luas/administratif/korporasi (berisiko konten melenceng). Beralih ke pool entitas spesifik...")
+                raise ValueError(f"Overbroad or unsuitable topic: {topic}")
+            recent_primary_lowers = {
+                re.split(r"\s+(?:dan|serta|atau)\s+|[,&/]", r.lower(), maxsplit=1)[0].strip()
+                for r in recent_lower if r
+            }
+            if topic.lower() in recent_lower or topic.lower() in recent_primary_lowers:
+                print(f"[Trend Hunter] Topik '{topic}' sudah pernah terbit baru-baru ini. Memilih topik segar dari pool terkurasi...")
+                raise ValueError(f"Duplicate recent topic: {topic}")
             # Jaminan Anti-Identik: Jika judul persis sama dengan yang pernah dibuat, tambahkan diferensiator sudut pandang
             if target_title.lower() in recent_lower:
                 target_title = f"{target_title}: Perspektif Baru & Fakta Mendalam ({datetime.now().strftime('%d %b %Y')})"
@@ -408,7 +460,8 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
     chosen_genre = preferred_genre if preferred_genre in TRAVELISTA_GENRES else random.choice(TRAVELISTA_GENRES)
     candidates = available_pool.get(chosen_genre, CURATED_EVERGREEN_POOL[chosen_genre])
     picked = random.choice(candidates)
-    top_signal = live_signals[0]["title"] if live_signals else picked["keyword"]
+    genre_signals = [s["title"] for s in live_signals if s.get("genre_hint") == chosen_genre]
+    top_signal = genre_signals[0] if genre_signals else picked["keyword"]
     fallback_title = f"Menjelajahi Pesona dan Fakta Menarik {picked['keyword']} yang Wajib Anda Ketahui"
     if fallback_title.lower() in recent_lower:
         fallback_title = f"{fallback_title} (Edisi {datetime.now().strftime('%d %b %Y')})"
@@ -416,7 +469,7 @@ Pilih 1 topik terhangat dan paling menarik untuk pembaca Travelista.id hari ini,
     seo_intel = mine_travel_search_keywords(picked["topic"], chosen_genre)
     return {
         "genre": chosen_genre,
-        "trending_keyword": f"{picked['keyword']} (Tren: {top_signal[:45]})",
+        "trending_keyword": top_signal[:90] if genre_signals else picked["keyword"],
         "trend_source": "Google News & Trends Indonesia",
         "topic": picked["topic"],
         "target_title": fallback_title,

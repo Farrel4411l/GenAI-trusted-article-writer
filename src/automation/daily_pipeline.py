@@ -1,14 +1,23 @@
+import random
 import re
 import time
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, Callable, Tuple, List
 import wikipedia
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.agents.orchestrator import build_graph
 from src.utils.metrics_logger import log_metrics
-from src.automation.trend_hunter import analyze_and_select_daily_topic
+from src.automation.trend_hunter import (
+    analyze_and_select_daily_topic,
+    CURATED_EVERGREEN_POOL,
+    is_overbroad_or_unsuitable_topic,
+    mine_travel_search_keywords,
+)
 from src.automation.model_router import select_optimal_models
 from src.automation.final_checker_agent import run_final_gatekeeper
 from src.automation.storage_supabase import (
+    get_db_connection,
     get_recent_topics,
     save_daily_article,
 )
@@ -27,6 +36,15 @@ _REFUSAL_PHRASES = (
 )
 
 
+_OFF_GENRE_POLLUTION_PHRASES = (
+    "operasi tangkap tangan",
+    "komisi pemberantasan korupsi",
+    "hamilton sundstrand",
+    "tragedi ga 152",
+    "inspektur jenderal polisi",
+)
+
+
 def _extract_primary_entity(raw_topic: str) -> str:
     """Ambil entitas tunggal utama jika LLM/planner menghasilkan topik majemuk 'A dan B'."""
     text = (raw_topic or "").strip()
@@ -36,16 +54,138 @@ def _extract_primary_entity(raw_topic: str) -> str:
     return primary or text
 
 
-def _is_broken_or_refusal_draft(draft_text: str) -> bool:
-    """Deteksi draf penolakan RAG atau draf terpotong sebelum masuk Checker 2 & Supabase."""
-    text = (draft_text or "").strip()
-    if len(text) < 600:
+def _inspect_draft_quality(draft_text: str, topic: str = "", genre: str = "") -> Tuple[bool, str]:
+    """
+    Mengaudit keutuhan draf setelah Orchestrator:
+    mengembalikan (is_broken, reason_code).
+    Mendeteksi penolakan RAG, draf terlalu pendek, terpotong di tengah kalimat,
+    ketiadaan Sumber Referensi, kebocoran tag <think>/aksara asing, dan isi melenceng.
+    """
+    raw = (draft_text or "").strip()
+    if "<think>" in raw.lower() or "</think>" in raw.lower():
+        raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL | re.IGNORECASE).strip()
+
+    body_only = re.split(r"(?i)\n\*{0,2}sumber referensi:?\*{0,2}", raw)[0].strip()
+    if len(body_only) < 1000:
+        if any(ph in body_only[:800].lower() for ph in _REFUSAL_PHRASES):
+            return True, "refusal"
+        return True, "short_body"
+
+    paragraphs = [p for p in re.split(r"\n\s*\n", body_only) if len(p.strip()) > 30]
+    if len(paragraphs) < 4:
+        return True, "few_paragraphs"
+
+    lower_head = body_only[:800].lower()
+    if any(phrase in lower_head for phrase in _REFUSAL_PHRASES):
+        return True, "refusal"
+
+    if not body_only.endswith((".", "!", "?", '"', "'", "”", ")", "*")):
+        return True, "truncated"
+
+    if not re.search(r"https?://[^\s\)]+", raw[len(body_only):]):
+        return True, "no_refs"
+
+    # Deteksi kebocoran aksara asing (CJK/Hangul/Cyrillic) yang menempel di kalimat Indonesia
+    cjk_glued = re.search(r"[A-Za-z][\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]|[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af][A-Za-z]", body_only)
+    is_east_asian_topic = any(k in (topic or "").lower() for k in ("tionghoa", "china", "jepang", "korea"))
+    cjk_any = re.search(r"[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]", body_only)
+    if cjk_glued or (cjk_any and not is_east_asian_topic):
+        return True, "cjk_leak"
+
+    body_low = body_only.lower()
+    if any(p in body_low for p in _OFF_GENRE_POLLUTION_PHRASES):
+        return True, "off_genre"
+
+    return False, "ok"
+
+
+def _is_broken_or_refusal_draft(draft_text: str, topic: str = "", genre: str = "") -> bool:
+    """Wrapper boolean untuk mendeteksi draf penolakan RAG atau draf bermasalah sebelum Checker 2."""
+    broken, _ = _inspect_draft_quality(draft_text, topic=topic, genre=genre)
+    return broken
+
+
+def _ensure_wikipedia_topic_indexed(topic: str) -> bool:
+    """
+    Memastikan artikel Wikipedia Bahasa Indonesia untuk `topic` sudah terindeks
+    dengan chunk substansial (>= 120 karakter) di `pgvector` sebelum Graph berjalan,
+    sehingga topik spesifik seperti Candi Plaosan tidak terjebak menjadi kosong konteks.
+    """
+    try:
+        import src.retriever.search as search_mod
+        _install_pgvector_connection_guard()
+        wikipedia.set_lang("id")
+        page_title = None
+        page_url = None
+        page_content = ""
+
+        try:
+            p = wikipedia.page(topic, auto_suggest=False)
+            page_title, page_url, page_content = p.title, p.url, p.content
+        except Exception:
+            try:
+                sr = wikipedia.search(topic, results=3)
+                for cand in sr:
+                    if topic.lower().split()[0] in cand.lower() or cand.lower() in topic.lower():
+                        p = wikipedia.page(cand, auto_suggest=False)
+                        page_title, page_url, page_content = p.title, p.url, p.content
+                        break
+            except Exception:
+                pass
+
+        if not page_content or len(page_content) < 600:
+            fb = _fetch_wiki_html_fallback(topic)
+            if fb and len(fb.get("extract", "")) >= 600:
+                page_title = fb["title"]
+                page_url = fb["url"]
+                page_content = fb["extract"]
+
+        if not page_title or len(page_content) < 600:
+            return False
+
+        # Cek apakah chunk berkualitas (>= 120 karakter) untuk judul ini sudah ada di pgvector
+        existing_substantial = 0
+        try:
+            conn = get_db_connection()
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT COUNT(*) FROM langchain_pg_embedding WHERE cmetadata->>'title' = %s AND length(document) >= 120;",
+                        (page_title,),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        existing_substantial = int(row[0])
+            conn.close()
+        except Exception:
+            pass
+
+        if existing_substantial >= 3:
+            return True
+
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
+        doc = Document(
+            page_content=page_content,
+            metadata={"title": page_title, "url": page_url, "source": "wikipedia-preseed"},
+        )
+        raw_chunks = splitter.split_documents([doc])
+        good_chunks = [c for c in raw_chunks if len(c.page_content.strip()) >= 120]
+        if good_chunks:
+            store = search_mod.get_vectorstore()
+            store.add_documents(good_chunks[:18])
+            print(f"[Pre-Seed RAG] Menambahkan {min(len(good_chunks), 18)} chunk bersih untuk '{page_title}' ke pgvector.")
         return True
-    paragraphs = [p for p in re.split(r"\n\s*\n", text) if len(p.strip()) > 30]
-    if len(paragraphs) < 3:
-        return True
-    lower_head = text[:800].lower()
-    return any(phrase in lower_head for phrase in _REFUSAL_PHRASES)
+    except Exception as e:
+        print(f"[Pre-Seed RAG] Info gagal pre-seed '{topic}': {e}")
+        return False
+
+
+def _pick_fresh_curated_topic(genre: str, exclude_topics: List[str]) -> Dict[str, str]:
+    """Memilih topik entitas spesifik terkurasi dari CURATED_EVERGREEN_POOL yang belum baru ditulis."""
+    pool = CURATED_EVERGREEN_POOL.get(genre, CURATED_EVERGREEN_POOL["Wisata & Destinasi (Travel)"])
+    ex_low = {t.lower().strip() for t in exclude_topics if t}
+    fresh = [item for item in pool if item["topic"].lower() not in ex_low]
+    return random.choice(fresh if fresh else pool)
 
 
 def _fetch_wiki_html_fallback(title_or_query: str) -> Dict[str, str]:
@@ -193,6 +333,53 @@ def _install_wikipedia_rate_limit_guard():
         pass
 
 
+_pgvector_patched = False
+_SHARED_PGVECTOR_STORE = None
+
+
+def _install_pgvector_connection_guard():
+    """
+    Mencegah kebocoran pool koneksi PGVector terhadap batas 15 koneksi Session Pooler Supabase
+    dengan memakai singleton PGVector + NullPool + create_extension=False, tanpa mengubah `src/retriever/search.py`.
+    """
+    global _pgvector_patched, _SHARED_PGVECTOR_STORE
+    if _pgvector_patched:
+        return
+    try:
+        from sqlalchemy.pool import NullPool
+        from langchain_community.vectorstores import PGVector
+        import src.retriever.search as search_mod
+
+        def _pooled_get_vectorstore():
+            global _SHARED_PGVECTOR_STORE
+            if _SHARED_PGVECTOR_STORE is not None:
+                return _SHARED_PGVECTOR_STORE
+            if not search_mod.DATABASE_URL:
+                raise ValueError("DATABASE_URL tidak disetel di .env")
+            try:
+                _SHARED_PGVECTOR_STORE = PGVector(
+                    collection_name=search_mod.COLLECTION_NAME,
+                    connection_string=search_mod.DATABASE_URL,
+                    embedding_function=search_mod.get_embeddings(),
+                    engine_args={"poolclass": NullPool},
+                    create_extension=False,
+                )
+            except Exception:
+                _SHARED_PGVECTOR_STORE = PGVector(
+                    collection_name=search_mod.COLLECTION_NAME,
+                    connection_string=search_mod.DATABASE_URL,
+                    embedding_function=search_mod.get_embeddings(),
+                    engine_args={"poolclass": NullPool},
+                    create_extension=True,
+                )
+            return _SHARED_PGVECTOR_STORE
+
+        search_mod.get_vectorstore = _pooled_get_vectorstore
+        _pgvector_patched = True
+    except Exception:
+        pass
+
+
 def run_autonomous_daily_pipeline(
     preferred_genre: Optional[str] = None,
     progress_callback: Optional[Callable[[str, str], None]] = None
@@ -213,6 +400,7 @@ def run_autonomous_daily_pipeline(
     start_time = time.time()
     now_wib = datetime.now(WIB_TZ)
     _install_wikipedia_rate_limit_guard()
+    _install_pgvector_connection_guard()
 
     # 1. Ambil daftar topik yang sudah pernah ditulis agar tidak duplikat
     _notify("trend", "🔎 Mengecek riwayat artikel di Supabase & memindai tren pencarian terkini (Google Trends & News ID)...")
@@ -232,6 +420,18 @@ def run_autonomous_daily_pipeline(
         print(f"[Daily Pipeline] Menyederhanakan topik majemuk '{raw_topic}' -> '{topic}' agar presisi RAG maksimal.")
     target_title = trend_plan["target_title"]
     editorial_angle = trend_plan["editorial_angle"]
+
+    # 2b. Pre-Seed Wikipedia Context & Validasi Spesifisitas Topik (cegah kegagalan tipe ID=35 Candi Plaosan / ID=34 Garuda)
+    if is_overbroad_or_unsuitable_topic(topic) or not _ensure_wikipedia_topic_indexed(topic):
+        fallback_pick = _pick_fresh_curated_topic(genre, recent_topics + [topic])
+        topic = fallback_pick["topic"]
+        trending_keyword = fallback_pick["keyword"]
+        target_title = f"Menelusuri Pesona {topic}: Sejarah, Keunikan, dan Fakta Menarik Nusantara"
+        editorial_angle = f"Mengulas tuntas daya tarik, latar sejarah, dan keunikan autentik {topic} berbasis fakta ensiklopedis terverifikasi."
+        seo_refreshed = mine_travel_search_keywords(topic, genre)
+        trend_plan.update(seo_refreshed)
+        _ensure_wikipedia_topic_indexed(topic)
+        print(f"[Daily Pipeline] Topik diganti ke entitas terverifikasi kaya referensi: '{topic}'")
 
     _notify(
         "trend_done",
@@ -297,24 +497,49 @@ def run_autonomous_daily_pipeline(
                     notes_short = final_state.get("revision_notes", "")[:180]
                     _notify("checker1_revise", f"🕵️‍♂️ **Checker 1 ({reviewer_label})**: Meminta revisi fakta/struktur ({notes_short}...).")
 
-    # 4b. Post-Orchestrator Draft Validity Guard (cegah draf penolakan/terpotong masuk database)
-    if _is_broken_or_refusal_draft(final_state.get("draft", "")):
+    # 4b. Post-Orchestrator Draft Validity Guard (cegah penolakan, terpotong, 0-referensi, aksara asing, atau konten melenceng)
+    if final_state.get("draft"):
+        final_state["draft"] = re.sub(r"<think>.*?</think>", "", final_state["draft"], flags=re.DOTALL | re.IGNORECASE).strip()
+
+    is_broken, broken_reason = _inspect_draft_quality(final_state.get("draft", ""), topic=topic, genre=genre)
+    if is_broken:
         clean_topic = _extract_primary_entity(topic)
-        recovery_writer = writer_model_id
-        recovery_note = f"entitas tunggal `{clean_topic}`"
+        recovery_writer = (
+            "cohere/command-a-plus-05-2026"
+            if writer_model_id != "cohere/command-a-plus-05-2026"
+            else "gemini/gemini-3.5-flash"
+        )
+        recovery_reviewer = (
+            "groq/openai/gpt-oss-120b"
+            if reviewer_model_id == recovery_writer
+            else reviewer_model_id
+        )
+        recovery_note = f"alasan=`{broken_reason}`, Writer=`{recovery_writer}`"
+
         if clean_topic.lower() != topic.strip().lower():
             topic = clean_topic
-        else:
-            recovery_writer = (
-                "cohere/command-a-plus-05-2026"
-                if writer_model_id != "cohere/command-a-plus-05-2026"
-                else "gemini/gemini-3.5-flash"
+            _ensure_wikipedia_topic_indexed(topic)
+        elif broken_reason in ("refusal", "off_genre", "short_body"):
+            alt_pick = _pick_fresh_curated_topic(genre, recent_topics + [topic])
+            topic = alt_pick["topic"]
+            trending_keyword = alt_pick["keyword"]
+            target_title = f"Menelusuri Pesona {topic}: Sejarah, Keunikan, dan Fakta Menarik Nusantara"
+            editorial_angle = f"Mengulas tuntas daya tarik, latar sejarah, dan keunikan autentik {topic} berbasis fakta ensiklopedis terverifikasi."
+            editorial_brief = (
+                f"ARAHAN REDAKSI OTOMATIS:\n"
+                f"- Genre Artikel: {genre}\n"
+                f"- Gunakan Judul Utama (Baris Pertama): # {target_title}\n"
+                f"- Sudut Pandang (Angle): {editorial_angle}\n"
+                f"- Wajib 5-8 paragraf dalam Bahasa Indonesia baku tanpa aksara asing, berdasar KONTEKS ASLI, dan sertakan **Sumber Referensi:** unik di akhir."
             )
-            recovery_note = f"Writer cadangan `{recovery_writer}`"
+            seo_refreshed = mine_travel_search_keywords(topic, genre)
+            trend_plan.update(seo_refreshed)
+            _ensure_wikipedia_topic_indexed(topic)
+            recovery_note = f"alasan=`{broken_reason}`, topik cadangan=`{topic}`, Writer=`{recovery_writer}`"
 
         _notify(
             "recovery",
-            f"⚠️ **Draft Validity Guard**: Draf awal terdeteksi tidak utuh/penolakan RAG; menjalankan 1x **Recovery Pass** dengan {recovery_note}..."
+            f"⚠️ **Draft Validity Guard**: Draf awal bermasalah ({recovery_note}); menjalankan **Recovery Pass**..."
         )
         time.sleep(5)
         recovery_state = {
@@ -325,7 +550,7 @@ def run_autonomous_daily_pipeline(
             "revision_count": 1,
             "is_passed": False,
             "writer_model": recovery_writer,
-            "reviewer_model": reviewer_model_id,
+            "reviewer_model": recovery_reviewer,
             "writer_tokens": int(final_state.get("writer_tokens", 0)),
             "reviewer_tokens": int(final_state.get("reviewer_tokens", 0)),
             "grader_tokens": int(final_state.get("grader_tokens", 0)),
@@ -339,16 +564,27 @@ def run_autonomous_daily_pipeline(
                     iter_num = recovery_final.get("revision_count", 1)
                     _notify("writer", f"✍️ **Recovery Writer ({recovery_writer})**: Selesai menyusun draf (Iterasi ke-{iter_num}).")
                 elif node_name == "reviewer" and recovery_final.get("is_passed"):
-                    _notify("checker1_pass", f"🕵️‍♂️ **Recovery Checker 1 ({reviewer_label})**: **LULUS** (Fakta & sitasi valid).")
+                    _notify("checker1_pass", f"🕵️‍♂️ **Recovery Checker 1 ({recovery_reviewer})**: **LULUS** (Fakta & sitasi valid).")
 
-        if not _is_broken_or_refusal_draft(recovery_final.get("draft", "")) or len(recovery_final.get("draft", "")) > len(final_state.get("draft", "")):
+        if recovery_final.get("draft"):
+            recovery_final["draft"] = re.sub(r"<think>.*?</think>", "", recovery_final["draft"], flags=re.DOTALL | re.IGNORECASE).strip()
+
+        rec_broken, _ = _inspect_draft_quality(recovery_final.get("draft", ""), topic=topic, genre=genre)
+        if not rec_broken or len(recovery_final.get("draft", "")) > len(final_state.get("draft", "")):
             final_state = recovery_final
             writer_model_id = recovery_writer
+            reviewer_model_id = recovery_reviewer
         else:
-            # Tetap akumulasi token recovery walau draf lama dipertahankan
             final_state["writer_tokens"] = int(recovery_final.get("writer_tokens", final_state.get("writer_tokens", 0)))
             final_state["reviewer_tokens"] = int(recovery_final.get("reviewer_tokens", final_state.get("reviewer_tokens", 0)))
             final_state["grader_tokens"] = int(recovery_final.get("grader_tokens", final_state.get("grader_tokens", 0)))
+
+    # Hard Publishability Gate: tolak draf penolakan/sampah sebelum Checker 2 & Supabase
+    final_broken, final_reason = _inspect_draft_quality(final_state.get("draft", ""), topic=topic, genre=genre)
+    if final_broken and final_reason in ("refusal", "short_body"):
+        raise RuntimeError(
+            f"Draf untuk '{topic}' ({genre}) gagal validasi konten setelah Recovery Pass (alasan={final_reason}); dibatalkan agar tidak menyimpan naskah rusak ke Supabase."
+        )
 
     # 5. Jalankan Checker 2 (Final Gatekeeper: Judul, Topik, Genre, Format CMS, SEO On-Page)
     _notify("checker2", "🛡️ **Checker 2 — Final Gatekeeper**: Memvalidasi keselarasan Judul, SEO, Topik, Genre, dan mengemas format CMS...")

@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 import psycopg2
@@ -22,12 +23,23 @@ def _get_clean_db_url() -> Optional[str]:
     return db_url
 
 
-def get_db_connection():
-    """Membuka koneksi ke PostgreSQL / Supabase."""
+def get_db_connection(max_retries: int = 4):
+    """Membuka koneksi ke PostgreSQL / Supabase dengan retry otomatis saat pool session sibuk."""
     db_url = _get_clean_db_url()
     if not db_url:
         raise ValueError("DATABASE_URL tidak ditemukan di environment variables (.env / st.secrets).")
-    return psycopg2.connect(db_url)
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            return psycopg2.connect(db_url)
+        except psycopg2.OperationalError as e:
+            last_err = e
+            if attempt < max_retries - 1 and ("max clients" in str(e).lower() or "emaxconnsession" in str(e).lower() or "timeout" in str(e).lower()):
+                time.sleep(2.5 * (attempt + 1))
+                continue
+            raise
+    if last_err:
+        raise last_err
 
 
 def init_daily_articles_table() -> bool:

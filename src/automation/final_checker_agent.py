@@ -107,17 +107,18 @@ def _generate_standardized_tags(topic: str, genre: str, raw_tags: List[str]) -> 
 
 
 def _find_related_internal_article(current_topic: str, current_genre: str, current_slug: str) -> Optional[Dict[str, str]]:
-    """Mencari artikel relevan terdahulu di Supabase untuk disisipkan sebagai Internal Link ('Baca Juga')."""
+    """
+    Mencari artikel SEHAT terdahulu di Supabase untuk disisipkan sebagai Internal Link ('Baca Juga').
+    Ketat menolak artikel rusak, penolakan RAG, draf terpotong, atau skor kepatuhan < 80,
+    serta memprioritaskan artikel dengan genre yang sama.
+    """
     try:
         from src.automation.storage_supabase import get_daily_articles
-        recent = get_daily_articles(limit=15)
-        for a in recent:
-            a_slug = a.get("slug")
-            if not a_slug or a_slug == current_slug:
-                continue
-            title = a.get("final_title") or a.get("title")
-            if not title:
-                continue
+        recent = get_daily_articles(limit=30)
+
+        def _build_entry(a: Dict[str, Any]) -> Dict[str, str]:
+            a_slug = a.get("slug", "")
+            title = a.get("final_title") or a.get("title") or ""
             run_date = str(a.get("run_date") or a.get("created_at") or "")[:10]
             if run_date and len(run_date) == 10:
                 y, m, d = run_date.split("-")
@@ -125,9 +126,44 @@ def _find_related_internal_article(current_topic: str, current_genre: str, curre
             else:
                 url = f"/{a_slug}"
             return {"title": title, "url": url}
+
+        healthy_same_genre: List[Dict[str, Any]] = []
+        healthy_other_genre: List[Dict[str, Any]] = []
+
+        for a in recent:
+            a_slug = a.get("slug")
+            if not a_slug or a_slug == current_slug:
+                continue
+            title = a.get("final_title") or a.get("title")
+            md = a.get("article_markdown") or ""
+            if not title or len(md) < 1800:
+                continue
+            if not a.get("final_check_passed") or (a.get("final_check_score") or 0) < 80:
+                continue
+            md_low = md[:600].lower()
+            if "tidak terdapat informasi" in md_low or "tidak ada informasi" in md_low:
+                continue
+            if (a.get("genre") or "").lower() == (current_genre or "").lower():
+                healthy_same_genre.append(a)
+            else:
+                healthy_other_genre.append(a)
+
+        chosen = healthy_same_genre[0] if healthy_same_genre else (healthy_other_genre[0] if healthy_other_genre else None)
+        if chosen:
+            return _build_entry(chosen)
     except Exception:
         pass
     return None
+
+
+def _is_orphan_bold_subtitle(block: str) -> bool:
+    """Mendeteksi baris subjudul bold tunggal seperti '**Judul Kecil**' agar tidak menjadi paragraf yatim di atas H2."""
+    b = block.strip()
+    if len(b) < 180 and b.startswith("**") and b.endswith("**") and "\n" not in b:
+        inner = b[2:-2].strip()
+        if "." not in inner[:-1]:
+            return True
+    return False
 
 
 def _inject_subheadings_and_internal_link(
@@ -149,14 +185,13 @@ def _inject_subheadings_and_internal_link(
     body_part = cleaned[:match.start()].strip() if match else cleaned.strip()
     ref_part = cleaned[match.start():].strip() if match else ""
 
-    # Pisahkan blok paragraf
+    # Pisahkan blok paragraf (abaikan heading & subjudul bold pendek yatim agar Lead selalu narasi utuh)
     paragraphs = []
     for block in re.split(r"\n\s*\n", body_part):
         b = block.strip()
         if not b:
             continue
-        # Abaikan heading H1 lama
-        if b.startswith("#") or b in ("***", "---", "___"):
+        if b.startswith("#") or b in ("***", "---", "___") or _is_orphan_bold_subtitle(b):
             continue
         if len(b) >= 50:
             paragraphs.append(b)
@@ -299,11 +334,36 @@ def _count_body_paragraphs(draft_text: str) -> int:
         b = block.strip()
         if not b:
             continue
-        if b.startswith("#") or b in ("***", "---", "___"):
+        if b.startswith("#") or b in ("***", "---", "___") or _is_orphan_bold_subtitle(b):
             continue
         if len(b) >= 60:
             paragraphs.append(b)
     return len(paragraphs)
+
+
+def _check_body_completeness_and_language(draft_text: str) -> Dict[str, Any]:
+    """Audit deterministik atas keutuhan kalimat akhir, penolakan RAG, kebocoran <think>, dan aksara asing tak wajar."""
+    cleaned = re.sub(r"<think>.*?</think>", "", (draft_text or ""), flags=re.DOTALL | re.IGNORECASE).strip()
+    body_only = re.split(r"(?i)\n\*{0,2}sumber referensi:?\*{0,2}", cleaned)[0].strip()
+    ends_cleanly = bool(body_only) and body_only.endswith((".", "!", "?", '"', "'", "”", ")", "*"))
+    lower_head = body_only[:800].lower()
+    is_refusal = any(
+        ph in lower_head
+        for ph in ("tidak terdapat informasi", "tidak ada informasi", "konteks tidak menyediakan", "mohon maaf, saya tidak")
+    )
+    has_think = "<think>" in (draft_text or "").lower() or "</think>" in (draft_text or "").lower()
+    # Deteksi kebocoran aksara CJK/Hangul yang menempel dengan huruf Latin atau muncul tak wajar
+    cjk_glued = bool(re.search(r"[A-Za-z][\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]|[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af][A-Za-z]", body_only))
+    cjk_chars = re.findall(r"[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]+", body_only)
+    return {
+        "cleaned_draft": cleaned,
+        "body_len": len(body_only),
+        "ends_cleanly": ends_cleanly,
+        "is_refusal": is_refusal,
+        "has_think": has_think,
+        "cjk_glued": cjk_glued,
+        "cjk_count": len(cjk_chars),
+    }
 
 
 def _ensure_header_and_clean_format(draft_text: str, final_title: str) -> str:
@@ -352,6 +412,8 @@ def run_final_gatekeeper(
     """
     print(f"\n[Final Gatekeeper] Mengaudit keselarasan Judul, SEO, Topik, Genre, dan Format CMS menggunakan {checker_model_id}...")
 
+    comp_stats = _check_body_completeness_and_language(draft)
+    draft = comp_stats["cleaned_draft"]
     para_count = _count_body_paragraphs(draft)
     refs_list = _extract_references_from_draft(draft)
     has_ref_section = len(refs_list) > 0
@@ -360,13 +422,13 @@ def run_final_gatekeeper(
 Draf artikel yang Anda terima SUDAH melalui pemeriksaan fakta sumber (Checker Tahap 1).
 Tugas Anda sekarang adalah mengaudit keselarasan akhir dan menyiapkan metadata SEO terstruktur untuk publikasi majalah & auto-deploy CMS:
 
-1. CEK KESESUAIAN JUDUL MAJALAH: Sempurnakan judul menjadi `final_title` yang elegan, memikat, dan bergaya majalah perjalanan (H1).
-2. BUAT JUDUL SERP GOOGLE (`meta_title`): Buat judul pencarian Google singkat (MAKSIMAL 60 KARAKTER) dengan Primary Keyword di depan (contoh: "Wisata Kawah Ijen: Daya Tarik Blue Fire & Info Tiket").
-3. BUAT RINGKASAN JAWABAN LANGSUNG (`excerpt`): Buat 1-2 kalimat padat (40-60 kata) yang langsung menjawab inti pertanyaan traveler untuk ditangkap Google AI Overview / Speakable.
+1. CEK KESESUAIAN JUDUL MAJALAH: Sempurnakan judul menjadi `final_title` yang elegan, memikat, berbahasa Indonesia alami, dan SETIA 100% pada isi draf (DILARANG menambah kata kunci palsu yang tidak ada di draf, misalnya menyebut nama menu/penghargaan yang tidak dibahas di isi artikel).
+2. BUAT JUDUL SERP GOOGLE (`meta_title`): Buat judul pencarian Google singkat (MAKSIMAL 60 KARAKTER) dengan Primary Keyword di depan.
+3. BUAT RINGKASAN JAWABAN LANGSUNG (`excerpt`): Buat 1-2 kalimat padat (40-60 kata) dalam Bahasa Indonesia baku yang langsung menjawab inti pertanyaan traveler.
 4. BUAT DESKRIPSI SERP (`meta_description`): Ringkasan 120-155 karakter yang memancing klik pembaca dari halaman pencarian.
-5. SUB-JUDUL BER-KEYWORD (`h2_subheadings`): Rancang 2-3 judul sub-bagian H2 kontekstual untuk memecah paragraf artikel agar nyaman dipindai pembaca.
-6. CEK KESESUAIAN TOPIK & GENRE: Pastikan draf selaras dengan genre dan niat liburan.
-7. BERIKAN SKOR KEPATUHAN: 0-100.
+5. SUB-JUDUL BER-KEYWORD (`h2_subheadings`): Rancang 2-3 sub-judul H2 dalam Bahasa Indonesia baku (hindari kata tidak baku seperti "dimana") yang BENAR-BENAR sesuai isi paragraf di bawahnya.
+6. CEK KESESUAIAN TOPIK, GENRE & KEUTUHAN: Jika draf ternyata membahas hal melenceng (misal berita korupsi KPK atau kecelakaan pesawat padahal genrenya Wisata/Kuliner/Budaya), ATAU artikelnya terpotong di tengah kalimat, ATAU berisi penolakan ("tidak terdapat informasi"), wajib set `topic_aligned: false` / `genre_aligned: false` / `format_aligned: false` dan beri skor rendah (< 50).
+7. BERIKAN SKOR KEPATUHAN: 0-100 secara objektif.
 
 Balas HANYA dengan format JSON murni berikut:
 {
@@ -502,18 +564,43 @@ DRAF ARTIKEL:
         has_internal_link=bool(internal_link_info)
     )
 
+    # Evaluasi gerbang deterministik agar skor Checker 2 tidak pernah meloloskan draf rusak/terpotong/campuran aksara asing
+    body_complete = comp_stats["ends_cleanly"] and not comp_stats["is_refusal"] and comp_stats["body_len"] >= 1200 and para_count >= 4
+    clean_language = not comp_stats["cjk_glued"] and not comp_stats["has_think"]
+
+    if comp_stats["is_refusal"] or comp_stats["body_len"] < 1000 or para_count < 3:
+        audit_data["compliance_score"] = min(int(audit_data["compliance_score"]), 35)
+    elif not comp_stats["ends_cleanly"] or not has_ref_section:
+        audit_data["compliance_score"] = min(int(audit_data["compliance_score"]), 65)
+    elif comp_stats["cjk_glued"] or comp_stats["has_think"]:
+        audit_data["compliance_score"] = min(int(audit_data["compliance_score"]), 68)
+
     is_passed = (
         audit_data["title_aligned"]
         and audit_data["topic_aligned"]
         and audit_data["genre_aligned"]
         and has_ref_section
+        and body_complete
+        and clean_language
+    )
+
+    extra_flags = []
+    if comp_stats["is_refusal"]:
+        extra_flags.append("Penolakan RAG")
+    if not comp_stats["ends_cleanly"]:
+        extra_flags.append("Terpotong Tengah Kalimat")
+    if comp_stats["cjk_glued"]:
+        extra_flags.append("Kebocoran Aksara Asing")
+
+    format_label = "✅ Siap Deploy" if (has_ref_section and body_complete) else (
+        f"⚠️ {', '.join(extra_flags)}" if extra_flags else "⚠️ Tanpa Sitasi"
     )
 
     checklist_summary = (
         f"[Judul: {'✅ Sesuai' if audit_data['title_aligned'] else '⚠️ Disesuaikan'}] "
         f"[Topik: {'✅ Sesuai' if audit_data['topic_aligned'] else '⚠️ Perlu Cek'}] "
         f"[Genre: {'✅ Sesuai' if audit_data['genre_aligned'] else '⚠️ Perlu Cek'}] "
-        f"[Format: {'✅ Siap Deploy' if has_ref_section else '⚠️ Tanpa Sitasi'} ({para_count} Paragraf, {len(refs_list)} Sumber)] "
+        f"[Format: {format_label} ({para_count} Paragraf, {len(refs_list)} Sumber)] "
         f"[SEO On-Page: {seo_audit['seo_score']}/100] — "
         f"{audit_data['audit_notes']}"
     )

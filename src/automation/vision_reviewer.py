@@ -4,7 +4,7 @@ import json
 import io
 import base64
 from typing import Dict, Any
-from PIL import Image
+from PIL import Image, ImageStat
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
@@ -12,12 +12,77 @@ from langchain_core.messages import HumanMessage
 load_dotenv()
 
 
+def _heuristic_image_quality_check(image_bytes: bytes, source_type: str) -> Dict[str, Any]:
+    """
+    Validasi kualitas citra berbasis statistik piksel (Pillow) ketika Vision AI sedang limit.
+    Memastikan gambar bukan placeholder polos, rusak, terlalu gelap, atau terlalu kecil.
+    """
+    if source_type == "ai_generative":
+        return {
+            "is_passed": False,
+            "score": 35,
+            "has_watermark": True,
+            "is_photorealistic": False,
+            "is_culturally_accurate": True,
+            "rejection_reason": "Gambar AI generatif ditolak demi menjaga keaslian fotografi Travelista.",
+            "audit_notes": "Ditolak oleh kebijakan anti-AI-slop Travelista.",
+        }
+
+    try:
+        im = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        w, h = im.size
+        if w < 500 or h < 300:
+            return {
+                "is_passed": False,
+                "score": 40,
+                "has_watermark": False,
+                "is_photorealistic": False,
+                "is_culturally_accurate": True,
+                "rejection_reason": f"Resolusi terlalu kecil ({w}x{h}).",
+                "audit_notes": f"Resolusi terlalu kecil ({w}x{h}).",
+            }
+        thumb = im.resize((96, 96))
+        stat = ImageStat.Stat(thumb)
+        mean_luma = sum(stat.mean) / 3.0
+        mean_std = sum(stat.stddev) / 3.0
+        if mean_std < 12.0 or mean_luma < 18.0 or mean_luma > 245.0:
+            return {
+                "is_passed": False,
+                "score": 45,
+                "has_watermark": False,
+                "is_photorealistic": False,
+                "is_culturally_accurate": True,
+                "rejection_reason": "Gambar tampak polos, terlalu gelap, atau minim detail fotografi.",
+                "audit_notes": "Kontras/detail piksel tidak memenuhi standar fotografi editorial.",
+            }
+    except Exception as e:
+        return {
+            "is_passed": False,
+            "score": 30,
+            "has_watermark": False,
+            "is_photorealistic": False,
+            "is_culturally_accurate": False,
+            "rejection_reason": f"Berkas gambar tidak valid: {e}",
+            "audit_notes": f"Berkas gambar gagal dibaca: {e}",
+        }
+
+    return {
+        "is_passed": True,
+        "score": 90 if source_type == "wikimedia_real" else 82,
+        "has_watermark": False,
+        "is_photorealistic": True,
+        "is_culturally_accurate": True,
+        "rejection_reason": "",
+        "audit_notes": f"Lolos verifikasi heuristik piksel & format foto nyata ({source_type}).",
+    }
+
+
 def audit_image_with_vision(
     image_bytes: bytes,
     topic: str,
     title: str,
     genre: str,
-    source_type: str = "ai_generative"
+    source_type: str = "wikimedia_real"
 ) -> Dict[str, Any]:
     """
     AGENT VISION REVIEWER (Visual Fact-Checker & Quality Gatekeeper):
@@ -26,25 +91,20 @@ def audit_image_with_vision(
     """
     print(f"\n[Vision Reviewer] Menginspeksi kelayakan gambar sampul untuk '{title}' ({source_type})...")
 
-    # Nilai default jika terjadi kendala teknis
-    default_result = {
-        "is_passed": True,
-        "score": 88 if source_type == "wikimedia_real" else 80,
-        "has_watermark": False,
-        "is_photorealistic": True,
-        "is_culturally_accurate": True,
-        "rejection_reason": "",
-        "audit_notes": f"Lolos verifikasi heuristik format ({source_type}).",
-    }
+    # Validasi heuristik awal: tolak gambar rusak, terlalu kecil, polos, atau AI generatif mentah
+    default_result = _heuristic_image_quality_check(image_bytes, source_type)
+    if not default_result["is_passed"]:
+        print(f"[Vision Reviewer] Ditolak oleh pra-audit kualitas: {default_result['rejection_reason']}")
+        return default_result
 
-    from src.automation.model_router import is_gemini_quota_exhausted
+    from src.automation.model_router import is_gemini_quota_exhausted, mark_gemini_exhausted
     if is_gemini_quota_exhausted():
-        print("[Vision Reviewer] Kuota Gemini terdeteksi habis. Menggunakan validasi heuristik format bawaan.")
+        print("[Vision Reviewer] Kuota Gemini terdeteksi habis. Menggunakan validasi heuristik piksel bawaan.")
         return default_result
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("[Vision Reviewer] GEMINI_API_KEY tidak ditemukan. Melewati inspeksi visual mendalam.")
+        print("[Vision Reviewer] GEMINI_API_KEY tidak ditemukan. Menggunakan validasi heuristik piksel bawaan.")
         return default_result
 
     try:
@@ -156,6 +216,9 @@ Balas HANYA dengan JSON murni berikut tanpa tag pembungkus markdown:
             return result
 
     except Exception as e:
-        print(f"[Vision Reviewer] Error saat inspeksi multimodal: {e}. Menggunakan fallback.")
+        err_low = str(e).lower()
+        if any(k in err_low for k in ("429", "resource_exhausted", "free_tier_requests", "quota")):
+            mark_gemini_exhausted()
+        print(f"[Vision Reviewer] Error saat inspeksi multimodal: {e}. Menggunakan fallback heuristik.")
 
     return default_result
