@@ -30,6 +30,12 @@ _REFUSAL_PHRASES = (
     "tidak terdapat informasi",
     "tidak ada informasi",
     "konteks yang diberikan tidak",
+    "konteks yang disediakan tidak",
+    "meskipun konteks yang disediakan",
+    "berdasarkan konteks yang",
+    "berdasarkan tiga artikel yang tercantum",
+    "tercantum dalam basis data",
+    "tidak ada satupun referensi",
     "konteks tidak menyediakan",
     "tidak memiliki informasi",
     "mohon maaf, saya tidak",
@@ -462,6 +468,7 @@ def run_autonomous_daily_pipeline(
         f"- Genre Artikel: {genre}\n"
         f"- Gunakan Judul Utama (Baris Pertama): # {target_title}\n"
         f"- Sudut Pandang (Angle): {editorial_angle}\n"
+        f"- Tulis sepenuhnya dalam Bahasa Indonesia jurnalistik yang mengalir alami tanpa menyisipkan kata asing/mandarin tak perlu dan JANGAN menulis meta-komentar seperti 'meskipun konteks tidak...' atau 'dalam basis data'.\n"
         f"- Wajib 5-8 paragraf berdasarkan KONTEKS ASLI dan sertakan **Sumber Referensi:** unik di bagian akhir."
     )
 

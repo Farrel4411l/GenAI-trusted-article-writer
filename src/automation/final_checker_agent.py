@@ -469,6 +469,14 @@ DRAF ARTIKEL:
     default_meta_title = meta_title_target or (f"{clean_topic_name}: Daya Tarik & Panduan Wisata"[:60])
     default_excerpt = f"{clean_topic_name} menawarkan pesona istimewa dalam kategori {genre}. Simak ulasan lengkap seputar daya tarik, latar sejarah, dan tips terbaik mengunjunginya di Travelista."
 
+    g_low = (genre or "").lower()
+    if "kuliner" in g_low:
+        default_h2_3 = f"Cara Penyajian dan Menikmati Kelezatan {clean_topic_name}"
+    elif "budaya" in g_low:
+        default_h2_3 = f"Pelestarian Budaya dan Kearifan Lokal {clean_topic_name}"
+    else:
+        default_h2_3 = f"Tips Mengunjungi dan Menikmati {clean_topic_name}"
+
     audit_data = {
         "title_aligned": True,
         "topic_aligned": True,
@@ -483,7 +491,7 @@ DRAF ARTIKEL:
         "h2_subheadings": [
             f"Daya Tarik Utama dan Pesona {clean_topic_name}",
             f"Keunikan Budaya dan Nilai Historis {clean_topic_name}",
-            f"Tips Menikmati Suasana Terbaik di {clean_topic_name}"
+            default_h2_3,
         ],
         "audit_notes": (
             f" Terverifikasi sesuai dengan genre '{genre}' dan topik '{topic}' "

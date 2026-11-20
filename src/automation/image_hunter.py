@@ -29,6 +29,8 @@ _EXCLUDED_IMAGE_KEYWORDS = (
     "stamp", "chart", "diagram", "graph", "qr", ".svg", ".gif", ".pdf", ".tiff",
     "korupsi", "police", "polisi", "kpk", "crash", "accident", "wreck",
     "Grave", "grave", "makam_korban", "newspaper", "koran", "blank", "placeholder",
+    "dead", "skeleton", "skull", "fossil", "corpse", "taxidermy", "stuffed",
+    "london_zoo", "thailand", "vietnam", "malaysia", "singapore",
 )
 
 # Cadangan Foto Nyata Wikimedia Commons Terverifikasi per Genre (100% Foto Asli, Bebas Watermark AI)
